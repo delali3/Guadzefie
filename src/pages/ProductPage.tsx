@@ -853,7 +853,7 @@ const ProductPage: React.FC = () => {
             <div key={i} className="group relative bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-300">
               <div className="aspect-w-1 aspect-h-1 bg-gray-200 dark:bg-gray-700 w-full overflow-hidden">
                 <img
-                  src={`https://source.unsplash.com/random/300x300/?ghana+farm+${i + 10}`}
+                  src={`https://img.freepik.com/free-photo/tegallalang-bali-near-cultural-village-ubud-is-area-known-as-tegallalang-that-boasts-most-dramatic-terraced-rice-fields-all-bali_231208-9914.jpg?t=st=1743871766~exp=1743875366~hmac=180aa16264de75dc8865dd8455e97feba89db7118daf0468a8be5d5623f57f7c&w=740`}
                   alt={`Seasonal product ${i + 1}`}
                   className="w-full h-full object-center object-cover group-hover:opacity-75"
                 />

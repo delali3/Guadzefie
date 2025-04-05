@@ -298,7 +298,7 @@ const ProductListPage: React.FC = () => {
 
     // State for filters and sorting
     const [categories, setCategories] = useState<any[]>([]);
-    const [regions] = useState<string[]>([
+    const [regions,] = useState<string[]>([
         'Greater Accra', 'Ashanti', 'Northern', 'Central', 'Western', 'Eastern', 'Volta'
     ]);
     const [farmingMethods] = useState<string[]>([

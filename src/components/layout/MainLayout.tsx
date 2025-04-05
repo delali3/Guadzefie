@@ -33,10 +33,13 @@ const MainLayout: React.FC<MainLayoutProps> = ({
   const { state } = useProducts();
   const { cart } = state;
 
+  // Replace your existing state definitions with these:
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const [mobileCategoryOpen, setMobileCategoryOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
   // Farm categories - in a real app these would come from an API
@@ -90,51 +93,51 @@ const MainLayout: React.FC<MainLayoutProps> = ({
   return (
     <div className="flex flex-col min-h-screen bg-green-50 dark:bg-gray-900 transition-colors duration-200">
       {/* Header */}
-      <header className={`sticky top-0 z-30 w-full transition-all duration-300 ${scrolled ? 'bg-white dark:bg-gray-800 shadow-md' : 'bg-white dark:bg-gray-800'
-        }`}>
+      {/* Header with overflow fixes */}
+      <header className={`sticky top-0 z-30 w-full transition-all duration-300 ${scrolled ? 'bg-white dark:bg-gray-800 shadow-md' : 'bg-white dark:bg-gray-800'}`}>
         {/* Top bar */}
-        <div className="bg-green-600 dark:bg-green-800 text-white py-2 text-center text-sm">
+        <div className="bg-green-600 dark:bg-green-800 text-white py-2 text-center text-sm overflow-hidden whitespace-nowrap text-ellipsis px-2">
           Direct from farm to table | Connecting Ghana's farmers with customers nationwide
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6">
           <div className="flex justify-between items-center h-16">
-            {/* Logo */}
+            {/* Logo - reduced margins on mobile */}
             <div className="flex-shrink-0">
               <Link to="/" className="flex items-center">
-                <svg className="h-8 w-8 text-green-600 dark:text-green-400" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 6.5C12 6.5 7.5 13 7.5 16C7.5 18.4853 9.51472 20.5 12 20.5C14.4853 20.5 16.5 18.4853 16.5 16C16.5 13 12 6.5 12 6.5Z" fill="currentColor"/>
-                  <path d="M12 6.5C12 6.5 7.5 13 7.5 16C7.5 18.4853 9.51472 20.5 12 20.5C14.4853 20.5 16.5 18.4853 16.5 16C16.5 13 12 6.5 12 6.5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M5 8.5L7 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M19 8.5L17 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M12 2.5V5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <svg className="h-7 w-7 sm:h-8 sm:w-8 text-green-600 dark:text-green-400" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 6.5C12 6.5 7.5 13 7.5 16C7.5 18.4853 9.51472 20.5 12 20.5C14.4853 20.5 16.5 18.4853 16.5 16C16.5 13 12 6.5 12 6.5Z" fill="currentColor" />
+                  <path d="M12 6.5C12 6.5 7.5 13 7.5 16C7.5 18.4853 9.51472 20.5 12 20.5C14.4853 20.5 16.5 18.4853 16.5 16C16.5 13 12 6.5 12 6.5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M5 8.5L7 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M19 8.5L17 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M12 2.5V5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-                <span className="ml-2 text-xl font-bold text-gray-900 dark:text-white">Guadzefie</span>
+                <span className="ml-1 sm:ml-2 text-lg sm:text-xl font-bold text-gray-900 dark:text-white truncate">Guadzefie</span>
               </Link>
             </div>
 
             {/* Desktop Navigation */}
-            <nav className="hidden md:flex space-x-8">
-              <Link to="/" className="text-gray-600 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 px-3 py-2 rounded-md text-sm font-medium">
+            <nav className="hidden md:flex space-x-4 lg:space-x-8">
+              <Link to="/" className="text-gray-600 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 px-2 py-2 rounded-md text-sm font-medium">
                 Home
               </Link>
               <div className="relative">
                 <button
-                  onClick={() => setDropdownOpen(!dropdownOpen)}
-                  className="text-gray-600 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 px-3 py-2 rounded-md text-sm font-medium flex items-center"
+                  onClick={() => setCategoryDropdownOpen(!categoryDropdownOpen)}
+                  className="text-gray-600 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 px-2 py-2 rounded-md text-sm font-medium flex items-center"
                 >
                   Farm Categories
                   <ChevronDown className="ml-1 h-4 w-4" />
                 </button>
-                {dropdownOpen && (
-                  <div className="absolute z-10 mt-2 w-48 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5">
+                {categoryDropdownOpen && (
+                  <div className="absolute z-40 mt-2 w-48 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5">
                     <div className="py-1" role="menu" aria-orientation="vertical">
                       {categories.map((category) => (
                         <Link
                           key={category.id}
                           to={`/products?category=${category.id}`}
                           className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                          onClick={() => setDropdownOpen(false)}
+                          onClick={() => setCategoryDropdownOpen(false)}
                         >
                           {category.name}
                         </Link>
@@ -143,48 +146,51 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                   </div>
                 )}
               </div>
-              <Link to="/products" className="text-gray-600 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 px-3 py-2 rounded-md text-sm font-medium">
+              <Link to="/products" className="text-gray-600 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 px-2 py-2 rounded-md text-sm font-medium">
                 All Produce
               </Link>
-              <Link to="/products?organic=true" className="text-gray-600 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 px-3 py-2 rounded-md text-sm font-medium flex items-center">
+              <Link to="/products?organic=true" className="text-gray-600 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 px-2 py-2 rounded-md text-sm font-medium flex items-center">
                 <Leaf className="mr-1 h-4 w-4" />
                 Organic
               </Link>
-              <Link to="/farmers" className="text-gray-600 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 px-3 py-2 rounded-md text-sm font-medium">
+              <Link to="/farmers" className="text-gray-600 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 px-2 py-2 rounded-md text-sm font-medium">
                 Our Farmers
               </Link>
             </nav>
 
-            {/* Right-side actions */}
-            <div className="flex items-center space-x-4">
+            {/* Right-side actions - with reduced spacing */}
+            <div className="flex items-center space-x-1 sm:space-x-2 lg:space-x-4">
               {/* Search button */}
               <button
                 onClick={() => setSearchOpen(!searchOpen)}
-                className="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400"
+                className="p-1.5 sm:p-2 rounded-full text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400"
+                aria-label="Search"
               >
-                <Search className="h-5 w-5" />
+                <Search className="h-4 w-4 sm:h-5 sm:w-5" />
               </button>
 
               {/* Dark mode toggle */}
               <button
                 onClick={toggleDarkMode}
-                className="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400"
+                className="p-1.5 sm:p-2 rounded-full text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400"
+                aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
               >
-                {darkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                {darkMode ? <Sun className="h-4 w-4 sm:h-5 sm:w-5" /> : <Moon className="h-4 w-4 sm:h-5 sm:w-5" />}
               </button>
 
               {/* Wishlist */}
-              <Link to="/wishlist" className="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 relative">
-                <Heart className="h-5 w-5" />
+              <Link to="/wishlist" className="p-1.5 sm:p-2 rounded-full text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 relative" aria-label="Wishlist">
+                <Heart className="h-4 w-4 sm:h-5 sm:w-5" />
                 {state.wishlist.length > 0 && (
                   <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-medium px-1.5 py-0.5 rounded-full">
                     {state.wishlist.length}
                   </span>
                 )}
               </Link>
+
               {/* Cart */}
-              <Link to="/cart" className="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 relative">
-                <ShoppingCart className="h-5 w-5" />
+              <Link to="/cart" className="p-1.5 sm:p-2 rounded-full text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 relative" aria-label="Cart">
+                <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5" />
                 {cartItemCount > 0 && (
                   <span className="absolute -top-1 -right-1 bg-green-600 text-white text-xs font-medium px-1.5 py-0.5 rounded-full">
                     {cartItemCount}
@@ -192,43 +198,44 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                 )}
               </Link>
 
-              {/* Account */}
+              {/* Account - desktop only */}
               {isAuthenticated ? (
-                <div className="relative">
+                <div className="relative hidden sm:block">
                   <button
-                    onClick={() => setDropdownOpen(!dropdownOpen)}
-                    className="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400"
+                    onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                    className="p-1.5 sm:p-2 rounded-full text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400"
+                    aria-label="Account"
                   >
-                    <User className="h-5 w-5" />
+                    <User className="h-4 w-4 sm:h-5 sm:w-5" />
                   </button>
-                  {dropdownOpen && (
-                    <div className="absolute right-0 z-10 mt-2 w-48 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5">
+                  {userDropdownOpen && (
+                    <div className="absolute right-0 z-40 mt-2 w-48 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5">
                       <div className="py-1" role="menu" aria-orientation="vertical">
                         <Link
                           to="/account"
                           className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                          onClick={() => setDropdownOpen(false)}
+                          onClick={() => setUserDropdownOpen(false)}
                         >
                           My Account
                         </Link>
                         <Link
                           to="/orders"
                           className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                          onClick={() => setDropdownOpen(false)}
+                          onClick={() => setUserDropdownOpen(false)}
                         >
                           Orders
                         </Link>
                         <Link
                           to="/my-farm"
                           className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                          onClick={() => setDropdownOpen(false)}
+                          onClick={() => setUserDropdownOpen(false)}
                         >
                           My Farm
                         </Link>
                         <button
                           onClick={() => {
                             handleSignOut();
-                            setDropdownOpen(false);
+                            setUserDropdownOpen(false);
                           }}
                           className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                         >
@@ -244,26 +251,27 @@ const MainLayout: React.FC<MainLayoutProps> = ({
               ) : (
                 <Link
                   to="/login"
-                  className="text-gray-600 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 px-3 py-2 rounded-md text-sm font-medium"
+                  className="hidden sm:block text-gray-600 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 px-2 py-2 rounded-md text-sm font-medium"
                 >
                   Sign In
                 </Link>
               )}
 
-              {/* Mobile menu button */}
+              {/* Mobile menu button - made slightly smaller */}
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="md:hidden p-2 rounded-md text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400"
+                className="md:hidden p-1 sm:p-1.5 rounded-md text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400"
+                aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
               >
-                {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+                {mobileMenuOpen ? <X className="h-5 w-5 sm:h-6 sm:w-6" /> : <Menu className="h-5 w-5 sm:h-6 sm:w-6" />}
               </button>
             </div>
           </div>
         </div>
 
-        {/* Mobile menu */}
+        {/* Mobile menu - with max-height and overflow control */}
         {mobileMenuOpen && (
-          <div className="md:hidden">
+          <div className="md:hidden bg-white dark:bg-gray-800 shadow-md max-h-[85vh] overflow-y-auto">
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
               <Link
                 to="/"
@@ -272,27 +280,29 @@ const MainLayout: React.FC<MainLayoutProps> = ({
               >
                 Home
               </Link>
-              <button
-                onClick={() => setDropdownOpen(!dropdownOpen)}
-                className="flex items-center justify-between w-full px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-              >
-                Farm Categories
-                <ChevronDown className="h-4 w-4" />
-              </button>
-              {dropdownOpen && (
-                <div className="pl-4">
-                  {categories.map((category) => (
-                    <Link
-                      key={category.id}
-                      to={`/products?category=${category.id}`}
-                      className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      {category.name}
-                    </Link>
-                  ))}
-                </div>
-              )}
+              <div>
+                <button
+                  onClick={() => setMobileCategoryOpen(!mobileCategoryOpen)}
+                  className="flex items-center justify-between w-full px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  Farm Categories
+                  <ChevronDown className={`h-4 w-4 transition-transform ${mobileCategoryOpen ? 'transform rotate-180' : ''}`} />
+                </button>
+                {mobileCategoryOpen && (
+                  <div className="pl-4">
+                    {categories.map((category) => (
+                      <Link
+                        key={category.id}
+                        to={`/products?category=${category.id}`}
+                        className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        {category.name}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
               <Link
                 to="/products"
                 className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -364,7 +374,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
 
         {/* Search overlay */}
         {searchOpen && (
-          <div className="absolute inset-0 z-40 bg-white dark:bg-gray-800 p-4">
+          <div className="fixed inset-0 z-50 bg-white dark:bg-gray-800 p-4 overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-medium text-gray-900 dark:text-white">Search Farm Products</h2>
               <button
@@ -527,9 +537,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                     className="w-full px-4 py-2 text-gray-900 dark:text-white placeholder-gray-500 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
                   />
                 </div>
-                
+
                 <div className="mt-2">
-                  <select 
+                  <select
                     className="w-full px-4 py-2 text-gray-900 dark:text-white placeholder-gray-500 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
                   >
                     <option value="">Select your region</option>
@@ -544,7 +554,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                     <option value="greater-accra">Greater Accra</option>
                   </select>
                 </div>
-                
+
                 <div className="mt-2">
                   <button
                     type="submit"
