@@ -85,21 +85,21 @@ const DashboardPage: React.FC = () => {
 
                 // Get orders data
                 let startDate;
-                let intervalName;
+                // let intervalName;
                 const now = new Date();
 
                 if (timeframe === 'week') {
                     startDate = new Date(now);
                     startDate.setDate(now.getDate() - 7);
-                    intervalName = 'day';
+                    // intervalName = 'day';
                 } else if (timeframe === 'month') {
                     startDate = new Date(now);
                     startDate.setDate(now.getDate() - 30);
-                    intervalName = 'week';
+                    // intervalName = 'week';
                 } else {
                     startDate = new Date(now);
                     startDate.setFullYear(now.getFullYear() - 1);
-                    intervalName = 'month';
+                    // intervalName = 'month';
                 }
 
                 // Format the date for SQL query
