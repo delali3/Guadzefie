@@ -22,7 +22,7 @@ const HeroSlider: React.FC = () => {
       subtitle: "Direct from Ghanaian Farms",
       description: "Connect directly with local farmers and purchase fresh, high-quality produce at fair prices.",
       buttonText: "Explore Produce",
-      image: "https://source.unsplash.com/random/1600x900/?ghana-farm",
+      image: "https://img.freepik.com/free-photo/photorealistic-view-african-people-harvesting-vegetables-grains_23-2151487536.jpg?t=st=1743871277~exp=1743874877~hmac=8adcc1d285ea9c4454392a09d4bf07dbc0e16afbde95e0aecc5df7e104b5d76a&w=1380",
       link: "/products?sort=newest"
     },
     {
@@ -30,7 +30,7 @@ const HeroSlider: React.FC = () => {
       subtitle: "Freshly Harvested Crops",
       description: "Discover the latest harvests from farms across Ghana's regions, delivered straight to your doorstep.",
       buttonText: "View Harvests",
-      image: "https://source.unsplash.com/random/1600x900/?cassava-farm",
+      image: "https://img.freepik.com/free-photo/countryside-worker-planting-out-field_23-2148761816.jpg?t=st=1743871470~exp=1743875070~hmac=3fc056d41b6d182a6bff94643b74c580ce2fd23af9258d707417c6941b36f4a7&w=1380",
       link: "/products?category=fresh"
     },
     {
@@ -38,7 +38,7 @@ const HeroSlider: React.FC = () => {
       subtitle: "Sustainably Grown Products",
       description: "Support eco-friendly farming practices with our selection of certified organic products from local farms.",
       buttonText: "Shop Organic",
-      image: "https://source.unsplash.com/random/1600x900/?organic-farm",
+      image: "https://img.freepik.com/free-photo/countryside-workers-out-field_23-2148761770.jpg?t=st=1743871405~exp=1743875005~hmac=4bd3cf3bda0722a1c7afe195ccfe2e1a23e9cf2982b21c37101009410b944523&w=1380",
       link: "/products?category=organic"
     }
   ];

@@ -157,7 +157,7 @@ const LoginPage: React.FC = () => {
         <div className="max-w-md w-full">
           <div className="md:hidden flex items-center justify-center mb-8">
             <ShoppingBag className="h-8 w-8 text-green-600 dark:text-green-400" />
-            <span className="ml-2 text-xl font-bold text-gray-900 dark:text-white">YourStore</span>
+            <span className="ml-2 text-xl font-bold text-gray-900 dark:text-white">Guadzefie</span>
           </div>
           
           <div className="text-center md:text-left">

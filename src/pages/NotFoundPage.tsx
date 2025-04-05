@@ -12,7 +12,7 @@ const NotFoundPage: React.FC = () => {
           <div className="flex items-center justify-between">
             <Link to="/" className="flex items-center">
               <ShoppingBag className="h-8 w-8 text-green-600 dark:text-green-400" />
-              <span className="ml-2 text-xl font-bold text-gray-900 dark:text-white">YourStore</span>
+              <span className="ml-2 text-xl font-bold text-gray-900 dark:text-white">Guadzefie</span>
             </Link>
           </div>
         </div>
@@ -121,7 +121,7 @@ const NotFoundPage: React.FC = () => {
             <div className="flex items-center">
               <ShoppingBag className="h-6 w-6 text-gray-400" />
               <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">
-                &copy; {new Date().getFullYear()} YourStore. All rights reserved.
+                &copy; {new Date().getFullYear()} Guadzefie. All rights reserved.
               </span>
             </div>
             <div className="mt-4 md:mt-0 flex space-x-6">

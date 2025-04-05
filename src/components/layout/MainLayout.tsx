@@ -109,7 +109,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                   <path d="M19 8.5L17 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   <path d="M12 2.5V5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
-                <span className="ml-2 text-xl font-bold text-gray-900 dark:text-white">GhanaFarm</span>
+                <span className="ml-2 text-xl font-bold text-gray-900 dark:text-white">Guadzefie</span>
               </Link>
             </div>
 
@@ -411,7 +411,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
             <div>
               <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider">About Us</h3>
               <p className="mt-4 text-sm text-gray-600 dark:text-gray-400">
-                GhanaFarm connects farmers across Ghana directly with buyers, ensuring fair prices and supporting sustainable agriculture.
+                Guadzefie connects farmers across Ghana directly with buyers, ensuring fair prices and supporting sustainable agriculture.
               </p>
               <div className="mt-4 flex space-x-6">
                 <a href="#" className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
@@ -571,7 +571,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
               </a>
             </div>
             <p className="mt-8 text-sm text-gray-600 dark:text-gray-400 md:mt-0 md:order-1">
-              &copy; {new Date().getFullYear()} GhanaFarm. All rights reserved.
+              &copy; {new Date().getFullYear()} Guadzefie. All rights reserved.
             </p>
           </div>
         </div>

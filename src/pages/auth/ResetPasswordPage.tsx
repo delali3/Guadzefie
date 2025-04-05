@@ -156,7 +156,7 @@ const ResetPasswordPage: React.FC = () => {
         <div>
           <div className="flex items-center justify-center mb-6">
             <ShoppingBag className="h-8 w-8 text-green-600 dark:text-green-400" />
-            <span className="ml-2 text-xl font-bold text-gray-900 dark:text-white">YourStore</span>
+            <span className="ml-2 text-xl font-bold text-gray-900 dark:text-white">Guadzefie</span>
           </div>
           
           <h1 className="text-center text-3xl font-extrabold text-gray-900 dark:text-white">
