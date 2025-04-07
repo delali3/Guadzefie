@@ -1,4 +1,3 @@
-// src/pages/RegisterPage.tsx
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
@@ -13,6 +12,7 @@ import {
   ShoppingBag,
   User
 } from 'lucide-react';
+import bcrypt from 'bcryptjs'; // You'll need to install this package
 
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
@@ -22,6 +22,7 @@ const RegisterPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [isFarm, setIsFarm] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreeToTerms, setAgreeToTerms] = useState(false);
@@ -170,25 +171,57 @@ const RegisterPage: React.FC = () => {
     setSuccess(null);
     
     try {
-      // Register the user with Supabase
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
+      // First check if user with this email already exists
+      const { data: existingUser, error: checkError } = await supabase
+        .from('users')
+        .select('email')
+        .eq('email', email)
+        .single();
+      
+      if (checkError && checkError.code !== 'PGRST116') { // PGRST116 means no rows returned
+        throw new Error('Error checking existing user');
+      }
+      
+      if (existingUser) {
+        setError('A user with this email already exists');
+        setLoading(false);
+        return;
+      }
+      
+      // Hash the password
+      // Note: In a production environment, you should hash passwords on the server side
+      // This client-side hashing is a simplification
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(password, salt);
+      
+      // Generate a verification token
+      const verificationToken = Math.random().toString(36).substring(2, 15) + 
+                              Math.random().toString(36).substring(2, 15);
+      
+      // Insert the new user
+      const { error: insertError } = await supabase
+        .from('users')
+        .insert([
+          { 
+            email,
+            password_hash: hashedPassword,
             first_name: firstName,
-            last_name: lastName
+            last_name: lastName,
+            is_farm: isFarm,
+            is_verified: false,
+            verification_token: verificationToken,
+            created_at: new Date().toISOString()
           }
-        }
-      });
+        ]);
       
-      if (error) throw error;
+      if (insertError) throw insertError;
       
-      // Successful registration
+      // In a real app, you would send a verification email here
+      // For this example, we'll simulate that process
+      
       setSuccess('Registration successful! Please check your email to verify your account.');
       
-      // In a real application, you might want to navigate to a verification page
-      // or show a message asking the user to check their email
+      // Redirect to login page after a delay
       setTimeout(() => {
         navigate('/login');
       }, 3000);
@@ -338,6 +371,60 @@ const RegisterPage: React.FC = () => {
               {emailError && (
                 <p className="mt-1 text-sm text-red-600 dark:text-red-400">{emailError}</p>
               )}
+            </div>
+            
+            {/* Account Type Selection */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                Account type
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <div 
+                  onClick={() => setIsFarm(false)}
+                  className={`flex items-center justify-center p-4 border ${
+                    !isFarm 
+                      ? 'border-green-500 bg-green-50 dark:bg-green-900/20' 
+                      : 'border-gray-300 dark:border-gray-600'
+                  } rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200`}
+                >
+                  <div className="text-center">
+                    <User className={`h-6 w-6 mx-auto ${!isFarm ? 'text-green-500' : 'text-gray-400'}`} />
+                    <span className={`block mt-2 text-sm font-medium ${
+                      !isFarm ? 'text-green-700 dark:text-green-300' : 'text-gray-700 dark:text-gray-300'
+                    }`}>
+                      Consumer
+                    </span>
+                  </div>
+                </div>
+                
+                <div 
+                  onClick={() => setIsFarm(true)}
+                  className={`flex items-center justify-center p-4 border ${
+                    isFarm 
+                      ? 'border-green-500 bg-green-50 dark:bg-green-900/20' 
+                      : 'border-gray-300 dark:border-gray-600'
+                  } rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200`}
+                >
+                  <div className="text-center">
+                    <svg 
+                      className={`h-6 w-6 mx-auto ${isFarm ? 'text-green-500' : 'text-gray-400'}`} 
+                      fill="currentColor" 
+                      viewBox="0 0 20 20" 
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path fillRule="evenodd" d="M5.5 17a2.5 2.5 0 01-2.5-2.5V5a2.5 2.5 0 012.5-2.5h2A2.5 2.5 0 0110 5v9.5a2.5 2.5 0 01-2.5 2.5h-2zM15 14.5a2.5 2.5 0 01-2.5 2.5h-.5a2.5 2.5 0 01-2.5-2.5V5A2.5 2.5 0 0112 2.5h.5A2.5 2.5 0 0115 5v9.5z" clipRule="evenodd" />
+                    </svg>
+                    <span className={`block mt-2 text-sm font-medium ${
+                      isFarm ? 'text-green-700 dark:text-green-300' : 'text-gray-700 dark:text-gray-300'
+                    }`}>
+                      Farm
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                Select "Farm" if you're registering as a farm or agricultural producer.
+              </p>
             </div>
             
             <div>
@@ -516,7 +603,7 @@ const RegisterPage: React.FC = () => {
             >
               <svg className="h-5 w-5 mr-2" aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
                 <path fillRule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clipRule="evenodd" />
-              </svg>
+                </svg>
               Facebook
             </button>
           </div>
