@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import {
     ShoppingBag,
-    Clock,
     Heart,
     Truck,
     MapPin,
