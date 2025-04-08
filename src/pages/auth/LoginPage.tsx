@@ -6,56 +6,76 @@ import bcrypt from 'bcryptjs';
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
-  
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email || !password) {
       setError('Please enter your email and password');
       return;
     }
-    
+
     setLoading(true);
     setError(null);
-    
+
     try {
+      console.log("Attempting to find user with email:", email);
+
       // Find user with this email
       const { data: user, error: userError } = await supabase
         .from('users')
         .select('*')
         .eq('email', email)
         .single();
-      
+
+      console.log("Query result:", { user, userError });
+
       if (userError) {
+        console.error("User query error:", userError);
         throw new Error('Invalid email or password');
       }
-      
+
       if (!user) {
+        console.error("No user found");
         throw new Error('Invalid email or password');
       }
-      
-      // Check if the user is verified
+
+      // For testing - auto-verify users
       if (!user.is_verified) {
-        throw new Error('Please verify your email before logging in');
+        console.log("User not verified, auto-verifying for testing");
+
+        const { error: updateError } = await supabase
+          .from('users')
+          .update({ is_verified: true })
+          .eq('id', user.id);
+
+        if (updateError) {
+          console.error("Verification update error:", updateError);
+          throw updateError;
+        }
+
+        // Update the user object with verified status
+        user.is_verified = true;
       }
-      
+
+      console.log("Comparing password");
       // Compare passwords
       const isPasswordValid = await bcrypt.compare(password, user.password_hash);
-      
+
+      console.log("Password valid:", isPasswordValid);
+
       if (!isPasswordValid) {
+        console.error("Invalid password");
         throw new Error('Invalid email or password');
       }
-      
+
       // Create a session
-      // In a real app, you would use a session management solution
-      // For this example, we'll store user info in localStorage
-      
       const sessionData = {
         id: user.id,
         email: user.email,
@@ -64,16 +84,18 @@ const LoginPage: React.FC = () => {
         is_farm: user.is_farm,
         created_at: user.created_at
       };
-      
+
+      console.log("Setting session data in localStorage");
       localStorage.setItem('user', JSON.stringify(sessionData));
-      
+
       // Redirect based on user type
+      // console.log("Redirecting user based on type:", user.is_farm);
       if (user.is_farm) {
         navigate('/farm');
       } else {
         navigate('/consumer');
       }
-      
+
     } catch (err) {
       console.error('Login error:', err);
       setError(err instanceof Error ? err.message : 'Login failed. Please try again.');
@@ -81,7 +103,6 @@ const LoginPage: React.FC = () => {
       setLoading(false);
     }
   };
-  
   const toggleShowPassword = () => {
     setShowPassword(!showPassword);
   };
@@ -94,7 +115,7 @@ const LoginPage: React.FC = () => {
             <ShoppingBag className="h-8 w-8 text-green-600 dark:text-green-400" />
             <span className="ml-2 text-xl font-bold text-gray-900 dark:text-white">Guadzefie</span>
           </div>
-          
+
           <h1 className="text-center text-3xl font-extrabold text-gray-900 dark:text-white">
             Sign in to your account
           </h1>
@@ -105,7 +126,7 @@ const LoginPage: React.FC = () => {
             </Link>
           </p>
         </div>
-        
+
         {/* Error message */}
         {error && (
           <div className="rounded-lg bg-red-50 dark:bg-red-900/30 p-4 shadow-sm">
@@ -119,7 +140,7 @@ const LoginPage: React.FC = () => {
             </div>
           </div>
         )}
-        
+
         <form className="mt-8 space-y-6" onSubmit={handleLogin}>
           <div className="space-y-5">
             <div>
@@ -143,7 +164,7 @@ const LoginPage: React.FC = () => {
                 />
               </div>
             </div>
-            
+
             <div>
               <div className="flex items-center justify-between">
                 <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -186,7 +207,7 @@ const LoginPage: React.FC = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <input
@@ -200,14 +221,13 @@ const LoginPage: React.FC = () => {
               </label>
             </div>
           </div>
-          
+
           <div>
             <button
               type="submit"
               disabled={loading}
-              className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white ${
-                loading ? 'bg-green-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'
-              } shadow-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500`}
+              className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white ${loading ? 'bg-green-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'
+                } shadow-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500`}
             >
               {loading ? (
                 <span className="absolute left-0 inset-y-0 flex items-center pl-3">
@@ -221,7 +241,7 @@ const LoginPage: React.FC = () => {
             </button>
           </div>
         </form>
-        
+
         {/* Social login options */}
         <div className="mt-6">
           <div className="relative">
@@ -234,7 +254,7 @@ const LoginPage: React.FC = () => {
               </span>
             </div>
           </div>
-          
+
           <div className="mt-6 grid grid-cols-2 gap-3">
             <button
               type="button"
@@ -245,7 +265,7 @@ const LoginPage: React.FC = () => {
               </svg>
               Google
             </button>
-            
+
             <button
               type="button"
               className="w-full inline-flex justify-center items-center py-2.5 px-4 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm bg-white dark:bg-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"

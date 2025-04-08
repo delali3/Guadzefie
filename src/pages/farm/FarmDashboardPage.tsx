@@ -89,65 +89,67 @@ const FarmDashboardPage: React.FC = () => {
     const [lowStockProducts, setLowStockProducts] = useState<any[]>([]);
 
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      setIsLoading(true);
-      setError(null);
-  
-      try {
-        // Get current user
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error("No authenticated user found");
-  
-        // Get total products for this farm
-        const { data: productsData, error: productsError } = await supabase
-          .from('products')
-          .select('id, name, inventory_count')
-          .eq('user_id', user.id);
-  
-        if (productsError) throw productsError;
-  
-        const products: Product[] = productsData || [];
-        const totalProducts = products.length;
-  
-        // Get products with low stock
-        const DEFAULT_THRESHOLD = 10;
-        const lowStockItems: LowStockItem[] = products
-          .filter(product =>
-            product.inventory_count !== null &&
-            product.inventory_count <= DEFAULT_THRESHOLD
-          )
-          .map(product => ({
-            id: product.id,
-            name: product.name,
-            stock: product.inventory_count,
-            threshold: DEFAULT_THRESHOLD
-          }));
-  
-        setLowStockProducts(lowStockItems);
-  
-        // Get orders data for this farm
-        let startDate;
-        const now = new Date();
-  
-        if (timeframe === 'week') {
-          startDate = new Date(now);
-          startDate.setDate(now.getDate() - 7);
-        } else if (timeframe === 'month') {
-          startDate = new Date(now);
-          startDate.setDate(now.getDate() - 30);
-        } else {
-          startDate = new Date(now);
-          startDate.setFullYear(now.getFullYear() - 1);
-        }
-  
-        // Format the date for SQL query
-        const formattedStartDate = startDate.toISOString();
-  
-        // Get orders for this farm's products
-        const { data: ordersData, error: ordersError } = await supabase
-          .from('orders')
-          .select(`
+    useEffect(() => {
+        const fetchDashboardData = async () => {
+            setIsLoading(true);
+            setError(null);
+
+            try {
+                // Get current user
+                // Get current user from localStorage
+                const storedUser = localStorage.getItem('user');
+                if (!storedUser) throw new Error("No authenticated user found");
+                const user = JSON.parse(storedUser);
+                
+                // Get total products for this farm
+                const { data: productsData, error: productsError } = await supabase
+                    .from('products')
+                    .select('id, name, inventory_count')
+                    .eq('user_id', user.id);
+
+                if (productsError) throw productsError;
+
+                const products: Product[] = productsData || [];
+                const totalProducts = products.length;
+
+                // Get products with low stock
+                const DEFAULT_THRESHOLD = 10;
+                const lowStockItems: LowStockItem[] = products
+                    .filter(product =>
+                        product.inventory_count !== null &&
+                        product.inventory_count <= DEFAULT_THRESHOLD
+                    )
+                    .map(product => ({
+                        id: product.id,
+                        name: product.name,
+                        stock: product.inventory_count,
+                        threshold: DEFAULT_THRESHOLD
+                    }));
+
+                setLowStockProducts(lowStockItems);
+
+                // Get orders data for this farm
+                let startDate;
+                const now = new Date();
+
+                if (timeframe === 'week') {
+                    startDate = new Date(now);
+                    startDate.setDate(now.getDate() - 7);
+                } else if (timeframe === 'month') {
+                    startDate = new Date(now);
+                    startDate.setDate(now.getDate() - 30);
+                } else {
+                    startDate = new Date(now);
+                    startDate.setFullYear(now.getFullYear() - 1);
+                }
+
+                // Format the date for SQL query
+                const formattedStartDate = startDate.toISOString();
+
+                // Get orders for this farm's products
+                const { data: ordersData, error: ordersError } = await supabase
+                    .from('orders')
+                    .select(`
             id, 
             created_at, 
             status, 
@@ -155,209 +157,209 @@ const FarmDashboardPage: React.FC = () => {
             user:user_id(id, email, first_name, last_name),
             order_items!inner(product_id)
           `)
-          .gte('created_at', formattedStartDate)
-          .order('created_at', { ascending: false });
-  
-        if (ordersError) throw ordersError;
-  
-        // Explicitly cast the result to Order[] type
-        const orders = ordersData as unknown as Order[];
-  
-        // Filter orders that contain this farm's products
-        const farmProductIds = products.map(product => product.id);
-        const farmOrders = orders.filter(order => 
-          order.order_items.some(item => 
-            farmProductIds.includes(item.product_id)
-          )
-        );
-  
-        // Calculate total sales and orders
-        const totalOrders = farmOrders.length;
-        const totalSales = farmOrders.reduce((sum, order) => sum + (order.total_amount || 0), 0);
-  
-        // Get unique customers who have ordered from this farm
-        const uniqueCustomerIds = new Set(farmOrders
-          .filter(order => order.user?.id)
-          .map(order => order.user?.id));
-        const totalCustomers = uniqueCustomerIds.size;
-  
-        // Get recent orders
-        const recentOrdersData: RecentOrder[] = farmOrders.slice(0, 5).map(order => {
-          const customerName = order.user
-            ? `${order.user.first_name || ''} ${order.user.last_name || ''}`.trim() || order.user.email || 'Unknown Customer'
-            : 'Unknown Customer';
-  
-          return {
-            id: order.id,
-            customer: customerName,
-            amount: order.total_amount || 0,
-            status: order.status || 'Pending',
-            date: new Date(order.created_at).toLocaleDateString()
-          };
-        });
-  
-        setRecentOrders(recentOrdersData);
-  
-        // Get previous period data for growth calculation
-        let previousPeriodStart;
-  
-        if (timeframe === 'week') {
-          previousPeriodStart = new Date(startDate);
-          previousPeriodStart.setDate(startDate.getDate() - 7);
-        } else if (timeframe === 'month') {
-          previousPeriodStart = new Date(startDate);
-          previousPeriodStart.setDate(startDate.getDate() - 30);
-        } else {
-          previousPeriodStart = new Date(startDate);
-          previousPeriodStart.setFullYear(startDate.getFullYear() - 1);
-        }
-  
-        const formattedPreviousPeriodStart = previousPeriodStart.toISOString();
-  
-        const { data: previousOrdersData, error: previousOrdersError } = await supabase
-          .from('orders')
-          .select(`
+                    .gte('created_at', formattedStartDate)
+                    .order('created_at', { ascending: false });
+
+                if (ordersError) throw ordersError;
+
+                // Explicitly cast the result to Order[] type
+                const orders = ordersData as unknown as Order[];
+
+                // Filter orders that contain this farm's products
+                const farmProductIds = products.map(product => product.id);
+                const farmOrders = orders.filter(order =>
+                    order.order_items.some(item =>
+                        farmProductIds.includes(item.product_id)
+                    )
+                );
+
+                // Calculate total sales and orders
+                const totalOrders = farmOrders.length;
+                const totalSales = farmOrders.reduce((sum, order) => sum + (order.total_amount || 0), 0);
+
+                // Get unique customers who have ordered from this farm
+                const uniqueCustomerIds = new Set(farmOrders
+                    .filter(order => order.user?.id)
+                    .map(order => order.user?.id));
+                const totalCustomers = uniqueCustomerIds.size;
+
+                // Get recent orders
+                const recentOrdersData: RecentOrder[] = farmOrders.slice(0, 5).map(order => {
+                    const customerName = order.user
+                        ? `${order.user.first_name || ''} ${order.user.last_name || ''}`.trim() || order.user.email || 'Unknown Customer'
+                        : 'Unknown Customer';
+
+                    return {
+                        id: order.id,
+                        customer: customerName,
+                        amount: order.total_amount || 0,
+                        status: order.status || 'Pending',
+                        date: new Date(order.created_at).toLocaleDateString()
+                    };
+                });
+
+                setRecentOrders(recentOrdersData);
+
+                // Get previous period data for growth calculation
+                let previousPeriodStart;
+
+                if (timeframe === 'week') {
+                    previousPeriodStart = new Date(startDate);
+                    previousPeriodStart.setDate(startDate.getDate() - 7);
+                } else if (timeframe === 'month') {
+                    previousPeriodStart = new Date(startDate);
+                    previousPeriodStart.setDate(startDate.getDate() - 30);
+                } else {
+                    previousPeriodStart = new Date(startDate);
+                    previousPeriodStart.setFullYear(startDate.getFullYear() - 1);
+                }
+
+                const formattedPreviousPeriodStart = previousPeriodStart.toISOString();
+
+                const { data: previousOrdersData, error: previousOrdersError } = await supabase
+                    .from('orders')
+                    .select(`
             id, 
             created_at, 
             total_amount,
             order_items!inner(product_id)
           `)
-          .gte('created_at', formattedPreviousPeriodStart)
-          .lt('created_at', formattedStartDate);
-  
-        if (previousOrdersError) throw previousOrdersError;
-  
-        // Type assertion for previous orders
-        const previousOrders = previousOrdersData as unknown as Order[];
-  
-        // Filter previous orders for this farm's products
-        const previousFarmOrders = previousOrders.filter(order => 
-          order.order_items.some(item => 
-            farmProductIds.includes(item.product_id)
-          )
-        );
-  
-        // Calculate growth percentages
-        const previousSales = previousFarmOrders.reduce((sum, order) => sum + (order.total_amount || 0), 0);
-        const previousOrdersCount = previousFarmOrders.length;
-  
-        const salesGrowth = previousSales > 0
-          ? ((totalSales - previousSales) / previousSales) * 100
-          : totalSales > 0 ? 100 : 0;
-  
-        const ordersGrowth = previousOrdersCount > 0
-          ? ((totalOrders - previousOrdersCount) / previousOrdersCount) * 100
-          : totalOrders > 0 ? 100 : 0;
-  
-        // Prepare chart data
-        let chartDataArray: ChartDataPoint[] = [];
-  
-        if (timeframe === 'week') {
-          // Group by day for the last week
-          const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-          const dailyData: ChartDataPoint[] = new Array(7).fill(0).map((_, index) => {
-            const date = new Date(now);
-            date.setDate(now.getDate() - (6 - index));
-            return {
-              date,
-              name: days[date.getDay()],
-              sales: 0,
-              orders: 0
-            };
-          });
-  
-          // Fill with actual order data
-          farmOrders.forEach(order => {
-            const orderDate = new Date(order.created_at);
-            const dayIndex = dailyData.findIndex(item =>
-              item.date &&
-              item.date.getDate() === orderDate.getDate() &&
-              item.date.getMonth() === orderDate.getMonth() &&
-              item.date.getFullYear() === orderDate.getFullYear()
-            );
-  
-            if (dayIndex !== -1) {
-              dailyData[dayIndex].sales += (order.total_amount || 0);
-              dailyData[dayIndex].orders += 1;
+                    .gte('created_at', formattedPreviousPeriodStart)
+                    .lt('created_at', formattedStartDate);
+
+                if (previousOrdersError) throw previousOrdersError;
+
+                // Type assertion for previous orders
+                const previousOrders = previousOrdersData as unknown as Order[];
+
+                // Filter previous orders for this farm's products
+                const previousFarmOrders = previousOrders.filter(order =>
+                    order.order_items.some(item =>
+                        farmProductIds.includes(item.product_id)
+                    )
+                );
+
+                // Calculate growth percentages
+                const previousSales = previousFarmOrders.reduce((sum, order) => sum + (order.total_amount || 0), 0);
+                const previousOrdersCount = previousFarmOrders.length;
+
+                const salesGrowth = previousSales > 0
+                    ? ((totalSales - previousSales) / previousSales) * 100
+                    : totalSales > 0 ? 100 : 0;
+
+                const ordersGrowth = previousOrdersCount > 0
+                    ? ((totalOrders - previousOrdersCount) / previousOrdersCount) * 100
+                    : totalOrders > 0 ? 100 : 0;
+
+                // Prepare chart data
+                let chartDataArray: ChartDataPoint[] = [];
+
+                if (timeframe === 'week') {
+                    // Group by day for the last week
+                    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                    const dailyData: ChartDataPoint[] = new Array(7).fill(0).map((_, index) => {
+                        const date = new Date(now);
+                        date.setDate(now.getDate() - (6 - index));
+                        return {
+                            date,
+                            name: days[date.getDay()],
+                            sales: 0,
+                            orders: 0
+                        };
+                    });
+
+                    // Fill with actual order data
+                    farmOrders.forEach(order => {
+                        const orderDate = new Date(order.created_at);
+                        const dayIndex = dailyData.findIndex(item =>
+                            item.date &&
+                            item.date.getDate() === orderDate.getDate() &&
+                            item.date.getMonth() === orderDate.getMonth() &&
+                            item.date.getFullYear() === orderDate.getFullYear()
+                        );
+
+                        if (dayIndex !== -1) {
+                            dailyData[dayIndex].sales += (order.total_amount || 0);
+                            dailyData[dayIndex].orders += 1;
+                        }
+                    });
+
+                    chartDataArray = dailyData;
+                } else if (timeframe === 'month') {
+                    // Group by week for the last month
+                    const weeksData: ChartDataPoint[] = new Array(4).fill(0).map((_, index) => {
+                        return {
+                            name: `Week ${index + 1}`,
+                            sales: 0,
+                            orders: 0
+                        };
+                    });
+
+                    // Fill with actual order data
+                    farmOrders.forEach(order => {
+                        const orderDate = new Date(order.created_at);
+                        const daysAgo = Math.floor((now.getTime() - orderDate.getTime()) / (1000 * 60 * 60 * 24));
+                        const weekIndex = Math.min(Math.floor(daysAgo / 7), 3);
+
+                        weeksData[weekIndex].sales += (order.total_amount || 0);
+                        weeksData[weekIndex].orders += 1;
+                    });
+
+                    chartDataArray = weeksData;
+                } else {
+                    // Group by month for the last year
+                    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                    const monthlyData: ChartDataPoint[] = new Array(12).fill(0).map((_, index) => {
+                        const date = new Date(now);
+                        date.setMonth(now.getMonth() - (11 - index));
+                        return {
+                            date,
+                            name: monthNames[date.getMonth()],
+                            sales: 0,
+                            orders: 0
+                        };
+                    });
+
+                    // Fill with actual order data
+                    farmOrders.forEach(order => {
+                        const orderDate = new Date(order.created_at);
+                        const monthIndex = monthlyData.findIndex(item =>
+                            item.date &&
+                            item.date.getMonth() === orderDate.getMonth() &&
+                            item.date.getFullYear() === orderDate.getFullYear()
+                        );
+
+                        if (monthIndex !== -1) {
+                            monthlyData[monthIndex].sales += (order.total_amount || 0);
+                            monthlyData[monthIndex].orders += 1;
+                        }
+                    });
+
+                    chartDataArray = monthlyData;
+                }
+
+                // Update state with all the fetched data
+                const statsData: Stats = {
+                    totalSales,
+                    totalOrders,
+                    totalCustomers,
+                    totalProducts,
+                    salesGrowth: parseFloat(salesGrowth.toFixed(1)),
+                    ordersGrowth: parseFloat(ordersGrowth.toFixed(1))
+                };
+
+                setStats(statsData);
+                setChartData(chartDataArray);
+            } catch (err) {
+                console.error('Error fetching farm dashboard data:', err);
+                setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
+            } finally {
+                setIsLoading(false);
             }
-          });
-  
-          chartDataArray = dailyData;
-        } else if (timeframe === 'month') {
-          // Group by week for the last month
-          const weeksData: ChartDataPoint[] = new Array(4).fill(0).map((_, index) => {
-            return {
-              name: `Week ${index + 1}`,
-              sales: 0,
-              orders: 0
-            };
-          });
-  
-          // Fill with actual order data
-          farmOrders.forEach(order => {
-            const orderDate = new Date(order.created_at);
-            const daysAgo = Math.floor((now.getTime() - orderDate.getTime()) / (1000 * 60 * 60 * 24));
-            const weekIndex = Math.min(Math.floor(daysAgo / 7), 3);
-  
-            weeksData[weekIndex].sales += (order.total_amount || 0);
-            weeksData[weekIndex].orders += 1;
-          });
-  
-          chartDataArray = weeksData;
-        } else {
-          // Group by month for the last year
-          const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-          const monthlyData: ChartDataPoint[] = new Array(12).fill(0).map((_, index) => {
-            const date = new Date(now);
-            date.setMonth(now.getMonth() - (11 - index));
-            return {
-              date,
-              name: monthNames[date.getMonth()],
-              sales: 0,
-              orders: 0
-            };
-          });
-  
-          // Fill with actual order data
-          farmOrders.forEach(order => {
-            const orderDate = new Date(order.created_at);
-            const monthIndex = monthlyData.findIndex(item =>
-              item.date &&
-              item.date.getMonth() === orderDate.getMonth() &&
-              item.date.getFullYear() === orderDate.getFullYear()
-            );
-  
-            if (monthIndex !== -1) {
-              monthlyData[monthIndex].sales += (order.total_amount || 0);
-              monthlyData[monthIndex].orders += 1;
-            }
-          });
-  
-          chartDataArray = monthlyData;
-        }
-  
-        // Update state with all the fetched data
-        const statsData: Stats = {
-          totalSales,
-          totalOrders,
-          totalCustomers,
-          totalProducts,
-          salesGrowth: parseFloat(salesGrowth.toFixed(1)),
-          ordersGrowth: parseFloat(ordersGrowth.toFixed(1))
         };
-  
-        setStats(statsData);
-        setChartData(chartDataArray);
-      } catch (err) {
-        console.error('Error fetching farm dashboard data:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-  
-    fetchDashboardData();
-  }, [timeframe]);
+
+        fetchDashboardData();
+    }, [timeframe]);
 
     if (isLoading) {
         return (

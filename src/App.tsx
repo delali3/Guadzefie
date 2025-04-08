@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { supabase } from './lib/supabase';
+// import { supabase } from './lib/supabase';
 import { ProductProvider } from './contexts/ProductContext';
 
 // Layouts
@@ -59,62 +59,28 @@ const App: React.FC = () => {
     window.matchMedia('(prefers-color-scheme: dark)').matches
   );
 
+
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
+    // Check for user in localStorage
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      const userData = JSON.parse(storedUser);
+      setSession({ user: userData }); // Format to match what your app expects
       
-      if (session?.user) {
-        fetchUserRole(session.user.id);
-      } else {
-        setLoading(false);
-      }
-    });
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      
-      if (session?.user) {
-        fetchUserRole(session.user.id);
-      } else {
-        setUserRole(null);
-        setLoading(false);
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
-  
-  // Fetch user role from database
-  const fetchUserRole = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('is_farm')
-        .eq('id', userId)
-        .single();
-        
-      if (error) throw error;
-      
-      // Determine role based on is_farm value
-      // In a real app, you might have a more complex role system
-      if (data.is_farm) {
+      // Set user role directly
+      if (userData.is_farm) {
         setUserRole('farm');
       } else {
         setUserRole('consumer');
       }
-    } catch (error) {
-      console.error('Error fetching user role:', error);
-      // Default to consumer if there's an error
-      setUserRole('consumer');
-    } finally {
-      setLoading(false);
     }
-  };
+    setLoading(false);
+    
+    // Remove the Supabase Auth listener since we're using localStorage
   
+  }, []);
+  
+
   const toggleDarkMode = () => {
     setDarkMode(prevMode => !prevMode);
   };
