@@ -565,6 +565,7 @@ const handleSubmit = async (e?: React.FormEvent) => {
                                             type="button"
                                             onClick={() => handleEditAddress(address)}
                                             className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
+                                            aria-label="Edit address"
                                         >
                                             <Edit className="w-4 h-4" />
                                         </button>
@@ -572,6 +573,7 @@ const handleSubmit = async (e?: React.FormEvent) => {
                                             type="button"
                                             onClick={() => handleDeleteAddress(address.id)}
                                             className="text-gray-400 hover:text-red-500 dark:hover:text-red-400"
+                                            aria-label="Delete address"
                                         >
                                             <Trash2 className="w-4 h-4" />
                                         </button>

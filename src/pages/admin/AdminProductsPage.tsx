@@ -395,6 +395,7 @@ const AdminProductsPage: React.FC = () => {
                                 <select
                                     id="category-filter"
                                     name="category-filter"
+                                    aria-label="Filter by category"
                                     value={selectedCategory === null ? '' : selectedCategory}
                                     onChange={(e) => setSelectedCategory(e.target.value ? Number(e.target.value) : null)}
                                     className="mt-1 block pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -413,6 +414,7 @@ const AdminProductsPage: React.FC = () => {
                                 <select
                                     id="inventory-filter"
                                     name="inventory-filter"
+                                    aria-label="Filter by inventory status"
                                     value={inventoryFilter}
                                     onChange={(e) => setInventoryFilter(e.target.value)}
                                     className="mt-1 block pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -429,6 +431,7 @@ const AdminProductsPage: React.FC = () => {
                                 <select
                                     id="featured-filter"
                                     name="featured-filter"
+                                    aria-label="Filter by featured status"
                                     value={featuredFilter}
                                     onChange={(e) => setFeaturedFilter(e.target.value)}
                                     className="mt-1 block pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -444,6 +447,7 @@ const AdminProductsPage: React.FC = () => {
                                 <select
                                     id="items-per-page"
                                     name="items-per-page"
+                                    aria-label="Select number of items per page"
                                     value={itemsPerPage}
                                     onChange={(e) => {
                                         setItemsPerPage(Number(e.target.value));
@@ -648,6 +652,7 @@ const AdminProductsPage: React.FC = () => {
                                                 id="select-all"
                                                 name="select-all"
                                                 type="checkbox"
+                                                aria-label="Select all products"
                                                 className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 dark:border-gray-600 rounded"
                                                 checked={bulkSelection.length === products.length && products.length > 0}
                                                 onChange={handleSelectAll}
@@ -729,6 +734,7 @@ const AdminProductsPage: React.FC = () => {
                                             <div className="flex items-center">
                                                 <input
                                                     type="checkbox"
+                                                    aria-label={`Select product ${product.name}`}
                                                     className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 dark:border-gray-600 rounded"
                                                     checked={bulkSelection.includes(product.id)}
                                                     onChange={(e) => handleSelectProduct(product.id, e.target.checked)}

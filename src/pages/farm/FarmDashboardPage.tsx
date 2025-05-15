@@ -15,44 +15,43 @@ import {
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
-interface User {
+interface Product {
     id: string;
-    email?: string;
-    first_name?: string;
-    last_name?: string;
-}
-
-interface OrderItem {
-    product_id: number;
+    name: string;
+    inventory_count: number;
 }
 
 interface Order {
-    id: number;
+    id: string;
     created_at: string;
     status?: string;
     total_amount?: number;
-    user: User | null;
-    order_items: OrderItem[];
+    user?: {
+        id?: string;
+        email?: string;
+        first_name?: string;
+        last_name?: string;
+    } | null;
+    order_items: {
+        id: string;
+        product_id: string;
+    }[];
+    estimated_delivery?: string;
 }
 
-interface Product {
-    id: number;
-    name: string;
-    inventory_count: number | null;
-}
-
-interface LowStockItem {
-    id: number;
-    name: string;
-    stock: number | null;
-    threshold: number;
-}
 interface RecentOrder {
-    id: number;
+    id: string;
     customer: string;
     amount: number;
     status: string;
     date: string;
+}
+
+interface ChartDataPoint {
+    date?: Date;
+    name: string;
+    sales: number;
+    orders: number;
 }
 
 interface Stats {
@@ -63,14 +62,6 @@ interface Stats {
     salesGrowth: number;
     ordersGrowth: number;
 }
-
-interface ChartDataPoint {
-    date?: Date;
-    name: string;
-    sales: number;
-    orders: number;
-}
-
 
 const FarmDashboardPage: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
@@ -84,10 +75,9 @@ const FarmDashboardPage: React.FC = () => {
         salesGrowth: 0,
         ordersGrowth: 0
     });
-    const [chartData, setChartData] = useState<any[]>([]);
-    const [recentOrders, setRecentOrders] = useState<any[]>([]);
-    const [lowStockProducts, setLowStockProducts] = useState<any[]>([]);
-
+    const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
+    const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
+    const [lowStockProducts, setLowStockProducts] = useState<Product[]>([]);
 
     useEffect(() => {
         const fetchDashboardData = async () => {
@@ -95,7 +85,6 @@ const FarmDashboardPage: React.FC = () => {
             setError(null);
 
             try {
-                // Get current user
                 // Get current user from localStorage
                 const storedUser = localStorage.getItem('user');
                 if (!storedUser) throw new Error("No authenticated user found");
@@ -114,21 +103,14 @@ const FarmDashboardPage: React.FC = () => {
 
                 // Get products with low stock
                 const DEFAULT_THRESHOLD = 10;
-                const lowStockItems: LowStockItem[] = products
-                    .filter(product =>
-                        product.inventory_count !== null &&
-                        product.inventory_count <= DEFAULT_THRESHOLD
-                    )
-                    .map(product => ({
-                        id: product.id,
-                        name: product.name,
-                        stock: product.inventory_count,
-                        threshold: DEFAULT_THRESHOLD
-                    }));
+                const lowStockItems = products.filter(product =>
+                    product.inventory_count !== null &&
+                    product.inventory_count <= DEFAULT_THRESHOLD
+                );
 
                 setLowStockProducts(lowStockItems);
 
-                // Get orders data for this farm
+                // Get orders data
                 let startDate;
                 const now = new Date();
 
@@ -143,27 +125,26 @@ const FarmDashboardPage: React.FC = () => {
                     startDate.setFullYear(now.getFullYear() - 1);
                 }
 
-                // Format the date for SQL query
                 const formattedStartDate = startDate.toISOString();
 
-                // Get orders for this farm's products
+                // Get all orders for the selected timeframe
                 const { data: ordersData, error: ordersError } = await supabase
                     .from('orders')
                     .select(`
-            id, 
-            created_at, 
-            status, 
-            total_amount, 
-            user:user_id(id, email, first_name, last_name),
-            order_items!inner(product_id)
-          `)
+                        id, 
+                        created_at, 
+                        status, 
+                        total_amount,
+                        order_items(id, product_id),
+                        user:user_id(id, email, first_name, last_name),
+                        estimated_delivery
+                    `)
                     .gte('created_at', formattedStartDate)
                     .order('created_at', { ascending: false });
 
                 if (ordersError) throw ordersError;
 
-                // Explicitly cast the result to Order[] type
-                const orders = ordersData as unknown as Order[];
+                const orders = ordersData as Order[];
 
                 // Filter orders that contain this farm's products
                 const farmProductIds = products.map(product => product.id);
@@ -202,7 +183,6 @@ const FarmDashboardPage: React.FC = () => {
 
                 // Get previous period data for growth calculation
                 let previousPeriodStart;
-
                 if (timeframe === 'week') {
                     previousPeriodStart = new Date(startDate);
                     previousPeriodStart.setDate(startDate.getDate() - 7);
@@ -218,22 +198,14 @@ const FarmDashboardPage: React.FC = () => {
 
                 const { data: previousOrdersData, error: previousOrdersError } = await supabase
                     .from('orders')
-                    .select(`
-            id, 
-            created_at, 
-            total_amount,
-            order_items!inner(product_id)
-          `)
+                    .select('id, created_at, total_amount, order_items(id, product_id)')
                     .gte('created_at', formattedPreviousPeriodStart)
                     .lt('created_at', formattedStartDate);
 
                 if (previousOrdersError) throw previousOrdersError;
 
-                // Type assertion for previous orders
-                const previousOrders = previousOrdersData as unknown as Order[];
-
                 // Filter previous orders for this farm's products
-                const previousFarmOrders = previousOrders.filter(order =>
+                const previousFarmOrders = (previousOrdersData as Order[]).filter(order =>
                     order.order_items.some(item =>
                         farmProductIds.includes(item.product_id)
                     )
@@ -241,14 +213,14 @@ const FarmDashboardPage: React.FC = () => {
 
                 // Calculate growth percentages
                 const previousSales = previousFarmOrders.reduce((sum, order) => sum + (order.total_amount || 0), 0);
-                const previousOrdersCount = previousFarmOrders.length;
+                const previousOrders = previousFarmOrders.length;
 
                 const salesGrowth = previousSales > 0
                     ? ((totalSales - previousSales) / previousSales) * 100
                     : totalSales > 0 ? 100 : 0;
 
-                const ordersGrowth = previousOrdersCount > 0
-                    ? ((totalOrders - previousOrdersCount) / previousOrdersCount) * 100
+                const ordersGrowth = previousOrders > 0
+                    ? ((totalOrders - previousOrders) / previousOrders) * 100
                     : totalOrders > 0 ? 100 : 0;
 
                 // Prepare chart data
@@ -257,7 +229,7 @@ const FarmDashboardPage: React.FC = () => {
                 if (timeframe === 'week') {
                     // Group by day for the last week
                     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-                    const dailyData: ChartDataPoint[] = new Array(7).fill(0).map((_, index) => {
+                    const dailyData = new Array(7).fill(0).map((_, index) => {
                         const date = new Date(now);
                         date.setDate(now.getDate() - (6 - index));
                         return {
@@ -272,10 +244,9 @@ const FarmDashboardPage: React.FC = () => {
                     farmOrders.forEach(order => {
                         const orderDate = new Date(order.created_at);
                         const dayIndex = dailyData.findIndex(item =>
-                            item.date &&
-                            item.date.getDate() === orderDate.getDate() &&
-                            item.date.getMonth() === orderDate.getMonth() &&
-                            item.date.getFullYear() === orderDate.getFullYear()
+                            item.date?.getDate() === orderDate.getDate() &&
+                            item.date?.getMonth() === orderDate.getMonth() &&
+                            item.date?.getFullYear() === orderDate.getFullYear()
                         );
 
                         if (dayIndex !== -1) {
@@ -287,13 +258,11 @@ const FarmDashboardPage: React.FC = () => {
                     chartDataArray = dailyData;
                 } else if (timeframe === 'month') {
                     // Group by week for the last month
-                    const weeksData: ChartDataPoint[] = new Array(4).fill(0).map((_, index) => {
-                        return {
-                            name: `Week ${index + 1}`,
-                            sales: 0,
-                            orders: 0
-                        };
-                    });
+                    const weeksData = new Array(4).fill(0).map((_, index) => ({
+                        name: `Week ${index + 1}`,
+                        sales: 0,
+                        orders: 0
+                    }));
 
                     // Fill with actual order data
                     farmOrders.forEach(order => {
@@ -309,7 +278,7 @@ const FarmDashboardPage: React.FC = () => {
                 } else {
                     // Group by month for the last year
                     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                    const monthlyData: ChartDataPoint[] = new Array(12).fill(0).map((_, index) => {
+                    const monthlyData = new Array(12).fill(0).map((_, index) => {
                         const date = new Date(now);
                         date.setMonth(now.getMonth() - (11 - index));
                         return {
@@ -324,9 +293,8 @@ const FarmDashboardPage: React.FC = () => {
                     farmOrders.forEach(order => {
                         const orderDate = new Date(order.created_at);
                         const monthIndex = monthlyData.findIndex(item =>
-                            item.date &&
-                            item.date.getMonth() === orderDate.getMonth() &&
-                            item.date.getFullYear() === orderDate.getFullYear()
+                            item.date?.getMonth() === orderDate.getMonth() &&
+                            item.date?.getFullYear() === orderDate.getFullYear()
                         );
 
                         if (monthIndex !== -1) {
@@ -417,8 +385,8 @@ const FarmDashboardPage: React.FC = () => {
                             <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Orders</p>
                             <h3 className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{stats.totalOrders}</h3>
                         </div>
-                        <div className="bg-purple-100 dark:bg-purple-900/30 p-3 rounded-full">
-                            <ShoppingBag className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                        <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-full">
+                            <ShoppingBag className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                         </div>
                     </div>
                     <div className="flex items-center mt-4 text-xs">
@@ -442,8 +410,8 @@ const FarmDashboardPage: React.FC = () => {
                             <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Customers</p>
                             <h3 className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{stats.totalCustomers}</h3>
                         </div>
-                        <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-full">
-                            <Users className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                        <div className="bg-purple-100 dark:bg-purple-900/30 p-3 rounded-full">
+                            <Users className="h-6 w-6 text-purple-600 dark:text-purple-400" />
                         </div>
                     </div>
                 </div>
@@ -451,7 +419,7 @@ const FarmDashboardPage: React.FC = () => {
                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                     <div className="flex justify-between items-start">
                         <div>
-                            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Products</p>
+                            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Products</p>
                             <h3 className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{stats.totalProducts}</h3>
                         </div>
                         <div className="bg-amber-100 dark:bg-amber-900/30 p-3 rounded-full">
@@ -474,6 +442,7 @@ const FarmDashboardPage: React.FC = () => {
                             value={timeframe}
                             onChange={(e) => setTimeframe(e.target.value)}
                             className="bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-300 text-sm rounded-lg focus:ring-green-500 focus:border-green-500 p-2"
+                            aria-label="Select timeframe"
                         >
                             <option value="week">Last 7 Days</option>
                             <option value="month">Last 30 Days</option>
@@ -505,7 +474,7 @@ const FarmDashboardPage: React.FC = () => {
                 </div>
             </div>
 
-            {/* Recent Orders & Inventory Alerts */}
+            {/* Recent Orders & Low Stock Products */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Recent Orders */}
                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
@@ -516,44 +485,42 @@ const FarmDashboardPage: React.FC = () => {
                         </Link>
                     </div>
                     <div className="divide-y divide-gray-200 dark:divide-gray-700">
-                        {recentOrders.length > 0 ? (
-                            recentOrders.map((order) => (
-                                <div key={order.id} className="px-6 py-4">
-                                    <div className="flex justify-between items-center">
-                                        <div>
-                                            <Link to={`/farm/orders/${order.id}`} className="text-sm font-medium text-gray-900 dark:text-white hover:text-green-600 dark:hover:text-green-400">
-                                                {order.id}
-                                            </Link>
-                                            <p className="text-sm text-gray-500 dark:text-gray-400">{order.customer}</p>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="text-sm font-medium text-gray-900 dark:text-white">${order.amount.toFixed(2)}</p>
-                                            <span className={`inline-flex text-xs px-2 py-1 rounded-full ${order.status === 'Completed'
-                                                ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
-                                                : order.status === 'Processing'
-                                                    ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300'
-                                                    : 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300'
-                                                }`}>
-                                                {order.status}
-                                            </span>
-                                        </div>
+                        {recentOrders.map((order) => (
+                            <div key={order.id} className="px-6 py-4">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <Link to={`/farm/orders/${order.id}`} className="text-sm font-medium text-gray-900 dark:text-white hover:text-green-600 dark:hover:text-green-400">
+                                            {order.id}
+                                        </Link>
+                                        <p className="text-sm text-gray-500 dark:text-gray-400">{order.customer}</p>
                                     </div>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{order.date}</p>
+                                    <div className="text-right">
+                                        <p className="text-sm font-medium text-gray-900 dark:text-white">${order.amount.toFixed(2)}</p>
+                                        <span className={`inline-flex text-xs px-2 py-1 rounded-full ${order.status === 'Completed'
+                                            ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
+                                            : order.status === 'Processing'
+                                                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300'
+                                                : 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300'
+                                            }`}>
+                                            {order.status}
+                                        </span>
+                                    </div>
                                 </div>
-                            ))
-                        ) : (
-                            <div className="px-6 py-8 text-center">
-                                <ShoppingBag className="h-12 w-12 mx-auto text-gray-400" />
-                                <p className="mt-4 text-gray-500 dark:text-gray-400">No orders found</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{order.date}</p>
                             </div>
-                        )}
+                        ))}
+                    </div>
+                    <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+                        <Link to="/farm/orders/new" className="text-sm text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300">
+                            Create New Order
+                        </Link>
                     </div>
                 </div>
 
-                {/* Inventory Status */}
+                {/* Low Stock Products */}
                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
                     <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                        <h2 className="text-lg font-medium text-gray-900 dark:text-white">Inventory Alerts</h2>
+                        <h2 className="text-lg font-medium text-gray-900 dark:text-white">Low Stock Products</h2>
                         <Link to="/farm/products" className="text-sm text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300">
                             View All Products
                         </Link>
@@ -562,24 +529,20 @@ const FarmDashboardPage: React.FC = () => {
                         <div className="divide-y divide-gray-200 dark:divide-gray-700">
                             {lowStockProducts.map((product) => (
                                 <div key={product.id} className="px-6 py-4">
-                                    <div className="flex items-start">
-                                        <div className="flex-shrink-0">
-                                            <div className="h-8 w-8 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-                                                <Leaf className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                                            </div>
-                                        </div>
-                                        <div className="ml-3 flex-1">
-                                            <div className="flex justify-between">
-                                                <Link to={`/farm/products/${product.id}`} className="text-sm font-medium text-gray-900 dark:text-white hover:text-green-600 dark:hover:text-green-400">
-                                                    {product.name}
-                                                </Link>
-                                                <span className="text-sm font-medium text-amber-600 dark:text-amber-400">
-                                                    {product.stock} left
-                                                </span>
-                                            </div>
-                                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                                                Below minimum threshold of {product.threshold}
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <Link to={`/farm/products/${product.id}`} className="text-sm font-medium text-gray-900 dark:text-white hover:text-green-600 dark:hover:text-green-400">
+                                                {product.name}
+                                            </Link>
+                                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                                                {product.inventory_count} units remaining
                                             </p>
+                                        </div>
+                                        <div className="flex items-center">
+                                            <AlertTriangle className="h-4 w-4 text-amber-500 mr-1" />
+                                            <span className="text-xs text-amber-600 dark:text-amber-400">
+                                                Below threshold (10)
+                                            </span>
                                         </div>
                                     </div>
                                 </div>

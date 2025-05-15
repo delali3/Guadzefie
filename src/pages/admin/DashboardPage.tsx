@@ -25,6 +25,14 @@ interface OrderWithUser {
         last_name?: string;
     } | null;
 }
+
+interface ChartDataPoint {
+    date?: Date;
+    name: string;
+    sales: number;
+    orders: number;
+}
+
 const DashboardPage: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -38,7 +46,7 @@ const DashboardPage: React.FC = () => {
         ordersGrowth: 0,
         customersGrowth: 0
     });
-    const [chartData, setChartData] = useState<any[]>([]);
+    const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
     const [recentOrders, setRecentOrders] = useState<any[]>([]);
     const [lowStockProducts, setLowStockProducts] = useState<any[]>([]);
 
@@ -49,7 +57,6 @@ const DashboardPage: React.FC = () => {
 
             try {
                 // Get total products
-                // Get total products
                 const { data: productsData, error: productsError } = await supabase
                     .from('products')
                     .select('id, name, inventory_count');
@@ -58,10 +65,8 @@ const DashboardPage: React.FC = () => {
 
                 const totalProducts = productsData?.length || 0;
 
-                // Get products with low stock - using a reasonable threshold
-                // Since there's no explicit threshold column, we'll use a default value
-                const DEFAULT_THRESHOLD = 10; // You can adjust this value based on your business needs
-
+                // Get products with low stock
+                const DEFAULT_THRESHOLD = 10;
                 const lowStockItems = productsData
                     ?.filter(product =>
                         product.inventory_count !== null &&
@@ -71,7 +76,7 @@ const DashboardPage: React.FC = () => {
                         id: product.id,
                         name: product.name,
                         stock: product.inventory_count,
-                        threshold: DEFAULT_THRESHOLD // Using default threshold
+                        threshold: DEFAULT_THRESHOLD
                     })) || [];
 
                 setLowStockProducts(lowStockItems);
@@ -85,27 +90,20 @@ const DashboardPage: React.FC = () => {
 
                 // Get orders data
                 let startDate;
-                // let intervalName;
                 const now = new Date();
 
                 if (timeframe === 'week') {
                     startDate = new Date(now);
                     startDate.setDate(now.getDate() - 7);
-                    // intervalName = 'day';
                 } else if (timeframe === 'month') {
                     startDate = new Date(now);
                     startDate.setDate(now.getDate() - 30);
-                    // intervalName = 'week';
                 } else {
                     startDate = new Date(now);
                     startDate.setFullYear(now.getFullYear() - 1);
-                    // intervalName = 'month';
                 }
 
-                // Format the date for SQL query
                 const formattedStartDate = startDate.toISOString();
-
-                // Get all orders for the selected timeframe
 
                 // Get all orders for the selected timeframe
                 const { data: ordersData, error: ordersError } = await supabase
@@ -122,7 +120,6 @@ const DashboardPage: React.FC = () => {
 
                 // Get recent orders
                 const typedOrdersData = ordersData as OrderWithUser[] | null;
-
                 const recentOrdersData = typedOrdersData?.slice(0, 5).map(order => {
                     const customerName = order.user
                         ? `${order.user.first_name || ''} ${order.user.last_name || ''}`.trim() || order.user.email || 'Unknown Customer'
@@ -138,9 +135,9 @@ const DashboardPage: React.FC = () => {
                 }) || [];
 
                 setRecentOrders(recentOrdersData);
+
                 // Get previous period data for growth calculation
                 let previousPeriodStart;
-
                 if (timeframe === 'week') {
                     previousPeriodStart = new Date(startDate);
                     previousPeriodStart.setDate(startDate.getDate() - 7);
@@ -187,7 +184,7 @@ const DashboardPage: React.FC = () => {
                     : (totalCustomers || 0) > 0 ? 100 : 0;
 
                 // Prepare chart data
-                let chartDataArray = [];
+                let chartDataArray: ChartDataPoint[] = [];
 
                 if (timeframe === 'week') {
                     // Group by day for the last week
@@ -207,9 +204,9 @@ const DashboardPage: React.FC = () => {
                     ordersData?.forEach(order => {
                         const orderDate = new Date(order.created_at);
                         const dayIndex = dailyData.findIndex(item =>
-                            item.date.getDate() === orderDate.getDate() &&
-                            item.date.getMonth() === orderDate.getMonth() &&
-                            item.date.getFullYear() === orderDate.getFullYear()
+                            item.date?.getDate() === orderDate.getDate() &&
+                            item.date?.getMonth() === orderDate.getMonth() &&
+                            item.date?.getFullYear() === orderDate.getFullYear()
                         );
 
                         if (dayIndex !== -1) {
@@ -221,13 +218,11 @@ const DashboardPage: React.FC = () => {
                     chartDataArray = dailyData;
                 } else if (timeframe === 'month') {
                     // Group by week for the last month
-                    const weeksData = new Array(4).fill(0).map((_, index) => {
-                        return {
-                            name: `Week ${index + 1}`,
-                            sales: 0,
-                            orders: 0
-                        };
-                    });
+                    const weeksData = new Array(4).fill(0).map((_, index) => ({
+                        name: `Week ${index + 1}`,
+                        sales: 0,
+                        orders: 0
+                    }));
 
                     // Fill with actual order data
                     ordersData?.forEach(order => {
@@ -258,8 +253,8 @@ const DashboardPage: React.FC = () => {
                     ordersData?.forEach(order => {
                         const orderDate = new Date(order.created_at);
                         const monthIndex = monthlyData.findIndex(item =>
-                            item.date.getMonth() === orderDate.getMonth() &&
-                            item.date.getFullYear() === orderDate.getFullYear()
+                            item.date?.getMonth() === orderDate.getMonth() &&
+                            item.date?.getFullYear() === orderDate.getFullYear()
                         );
 
                         if (monthIndex !== -1) {
@@ -294,7 +289,6 @@ const DashboardPage: React.FC = () => {
         fetchDashboardData();
     }, [timeframe]);
 
-    // The rest of your component remains the same
     if (isLoading) {
         return (
             <div className="flex justify-center items-center h-64">
@@ -335,6 +329,56 @@ const DashboardPage: React.FC = () => {
                             <>
                                 <TrendingDown className="h-4 w-4 text-red-500 mr-1" />
                                 <span className="text-red-500">{stats.salesGrowth}% from previous period</span>
+                            </>
+                        )}
+                    </div>
+                </div>
+
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                    <div className="flex justify-between items-start">
+                        <div>
+                            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Orders</p>
+                            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{stats.totalOrders}</h3>
+                        </div>
+                        <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-full">
+                            <ShoppingBag className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                        </div>
+                    </div>
+                    <div className="flex items-center mt-4 text-xs">
+                        {stats.ordersGrowth >= 0 ? (
+                            <>
+                                <TrendingUp className="h-4 w-4 text-green-500 mr-1" />
+                                <span className="text-green-500">+{stats.ordersGrowth}% from previous period</span>
+                            </>
+                        ) : (
+                            <>
+                                <TrendingDown className="h-4 w-4 text-red-500 mr-1" />
+                                <span className="text-red-500">{stats.ordersGrowth}% from previous period</span>
+                            </>
+                        )}
+                    </div>
+                </div>
+
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                    <div className="flex justify-between items-start">
+                        <div>
+                            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Customers</p>
+                            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{stats.totalCustomers}</h3>
+                        </div>
+                        <div className="bg-purple-100 dark:bg-purple-900/30 p-3 rounded-full">
+                            <Users className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                        </div>
+                    </div>
+                    <div className="flex items-center mt-4 text-xs">
+                        {stats.customersGrowth >= 0 ? (
+                            <>
+                                <TrendingUp className="h-4 w-4 text-green-500 mr-1" />
+                                <span className="text-green-500">+{stats.customersGrowth}% from previous period</span>
+                            </>
+                        ) : (
+                            <>
+                                <TrendingDown className="h-4 w-4 text-red-500 mr-1" />
+                                <span className="text-red-500">{stats.customersGrowth}% from previous period</span>
                             </>
                         )}
                     </div>
@@ -410,7 +454,7 @@ const DashboardPage: React.FC = () => {
                     <div className="divide-y divide-gray-200 dark:divide-gray-700">
                         {recentOrders.map((order) => (
                             <div key={order.id} className="px-6 py-4">
-                                <div className="flex justify-between items-center">
+                                <div className="flex justify-between items-start">
                                     <div>
                                         <Link to={`/admin/orders/${order.id}`} className="text-sm font-medium text-gray-900 dark:text-white hover:text-green-600 dark:hover:text-green-400">
                                             {order.id}
@@ -452,22 +496,20 @@ const DashboardPage: React.FC = () => {
                         <div className="divide-y divide-gray-200 dark:divide-gray-700">
                             {lowStockProducts.map((product) => (
                                 <div key={product.id} className="px-6 py-4">
-                                    <div className="flex items-start">
-                                        <div className="flex-shrink-0">
-                                            <AlertTriangle className="h-5 w-5 text-amber-500" />
-                                        </div>
-                                        <div className="ml-3 flex-1">
-                                            <div className="flex justify-between">
-                                                <Link to={`/admin/products/${product.id}`} className="text-sm font-medium text-gray-900 dark:text-white hover:text-green-600 dark:hover:text-green-400">
-                                                    {product.name}
-                                                </Link>
-                                                <span className="text-sm font-medium text-amber-600 dark:text-amber-400">
-                                                    {product.stock} left
-                                                </span>
-                                            </div>
-                                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                                                Below minimum threshold of {product.threshold}
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <Link to={`/admin/products/${product.id}`} className="text-sm font-medium text-gray-900 dark:text-white hover:text-green-600 dark:hover:text-green-400">
+                                                {product.name}
+                                            </Link>
+                                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                                                {product.stock} units remaining
                                             </p>
+                                        </div>
+                                        <div className="flex items-center">
+                                            <AlertTriangle className="h-4 w-4 text-amber-500 mr-1" />
+                                            <span className="text-xs text-amber-600 dark:text-amber-400">
+                                                Below threshold ({product.threshold})
+                                            </span>
                                         </div>
                                     </div>
                                 </div>

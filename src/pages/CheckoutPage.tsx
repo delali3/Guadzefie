@@ -13,6 +13,7 @@ import {
   Lock,
   AlertCircle
 } from 'lucide-react';
+import PaystackPayment from '../components/payment/PaystackPayment';
 
 interface CartProduct {
   id: number;
@@ -48,6 +49,7 @@ const CheckoutPage: React.FC = () => {
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
   const [processingOrder, setProcessingOrder] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
   
   // Form states
   const [activeStep, setActiveStep] = useState<'shipping' | 'payment' | 'review'>('shipping');
@@ -435,20 +437,132 @@ const CheckoutPage: React.FC = () => {
   const handlePlaceOrder = async () => {
     setProcessingOrder(true);
     setError(null);
+    setPaymentError(null);
     
     try {
-      // In a real app, you would submit order data to your backend
-      // Simulate API call with a timeout
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      if (selectedPaymentMethod === 'paystack') {
+        // For Paystack, we don't clear the cart here
+        // The cart will be cleared only after successful payment
+        setActiveStep('payment');
+        return;
+      }
+
+      // For other payment methods, proceed with normal order placement
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Generate a random order number
-      const randomOrderNum = `ORD-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
-      setOrderNumber(randomOrderNum);
+      // Create a unique order number - use numeric ID for database
+      const randomOrderNum = Math.floor(Math.random() * 1000000) + 1000;
+      const orderIdString = `ORD-${randomOrderNum}`;
+      setOrderNumber(orderIdString);
       
-      // Clear the cart
+      // Get the user ID from localStorage
+      const storedUser = localStorage.getItem('user');
+      if (!storedUser) {
+        throw new Error("You must be logged in to place an order");
+      }
+      
+      const user = JSON.parse(storedUser);
+      if (!user || !user.id) {
+        throw new Error("Invalid user session. Please log in again.");
+      }
+      
+      // Format the shipping address
+      const shippingAddressData = {
+        address: shippingInfo.address,
+        city: shippingInfo.city,
+        state: shippingInfo.state,
+        postal_code: shippingInfo.postalCode,
+        country: shippingInfo.country
+      };
+      
+      // Insert order into the database
+      const { data: orderData, error: orderError } = await supabase
+        .from('orders')
+        .insert([
+          {
+            id: randomOrderNum, // Use the numeric ID for database
+            user_id: user.id,
+            order_number: orderIdString, // Store string version as order_number
+            status: 'Processing',
+            total_amount: total,
+            shipping_address: shippingAddressData,
+            payment_method: selectedPaymentMethod,
+            created_at: new Date().toISOString()
+          }
+        ])
+        .select()
+        .single();
+        
+      if (orderError) {
+        console.error("Error creating order:", orderError);
+        throw new Error("Failed to create order. Please try again.");
+      }
+      
+      console.log("Order created:", orderData);
+      
+      // Save each order item
+      const orderItems = state.cart.map(item => {
+        const product = cartProducts[item.product_id];
+        const price = product.discount_percentage
+          ? product.price * (1 - (product.discount_percentage / 100))
+          : product.price;
+        return {
+          order_id: randomOrderNum, // Use numeric ID here
+          product_id: item.product_id,
+          quantity: item.quantity,
+          price_per_unit: price,
+          subtotal: price * item.quantity
+        };
+      });
+      
+      const { error: itemsError } = await supabase
+        .from('order_items')
+        .insert(orderItems);
+        
+      if (itemsError) {
+        console.error("Error creating order items:", itemsError);
+        // Don't throw here, as the order is already created
+      }
+      
+      // Save shipping address if requested and user is authenticated
+      if (shippingInfo.saveAddress && isAuthenticated) {
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          
+          if (user) {
+            // Check if the address already exists
+            const { data: existingAddresses, error: checkError } = await supabase
+              .from('shipping_addresses')
+              .select('*')
+              .eq('user_id', user.id)
+              .eq('address', shippingInfo.address);
+              
+            if (checkError) {
+              console.error('Error checking existing addresses:', checkError);
+            } else if (!existingAddresses || existingAddresses.length === 0) {
+              // Address doesn't exist, save it
+              await supabase.from('shipping_addresses').insert([{
+                user_id: user.id,
+                first_name: shippingInfo.firstName,
+                last_name: shippingInfo.lastName,
+                address: shippingInfo.address,
+                city: shippingInfo.city,
+                state: shippingInfo.state,
+                postal_code: shippingInfo.postalCode,
+                country: shippingInfo.country,
+                phone: shippingInfo.phone,
+                is_default: addressState.addresses.length === 0, // Make default if first address
+              }]);
+            }
+          }
+        } catch (error) {
+          console.error('Error saving address:', error);
+        }
+      }
+      
+      // Clear the cart only after successful order placement
       clearCart();
       
-      // Show success message
       setOrderComplete(true);
       window.scrollTo(0, 0);
     } catch (err) {
@@ -457,6 +571,217 @@ const CheckoutPage: React.FC = () => {
     } finally {
       setProcessingOrder(false);
     }
+  };
+
+  const handlePaystackSuccess = async (reference: string) => {
+    setProcessingOrder(true);
+    try {
+      // Here you would typically verify the payment with your backend
+      // For now, we'll simulate a successful verification
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Create a unique order number - use numeric ID for database
+      const randomOrderNum = Math.floor(Math.random() * 1000000) + 1000;
+      const orderIdString = `ORD-${randomOrderNum}`;
+      setOrderNumber(orderIdString);
+      
+      // Get the user ID from localStorage
+      const storedUser = localStorage.getItem('user');
+      if (!storedUser) {
+        throw new Error("You must be logged in to place an order");
+      }
+      
+      const user = JSON.parse(storedUser);
+      if (!user || !user.id) {
+        throw new Error("Invalid user session. Please log in again.");
+      }
+      
+      // Format the shipping address
+      const shippingAddressData = {
+        address: shippingInfo.address,
+        city: shippingInfo.city,
+        state: shippingInfo.state,
+        postal_code: shippingInfo.postalCode,
+        country: shippingInfo.country
+      };
+      
+      // Check if payment_reference column exists in orders table
+      try {
+        // First, check if we can safely include payment_reference
+        const { error: checkError } = await supabase
+          .from('orders')
+          .select('id')
+          .limit(1);
+  
+        // Create the order data object
+        const orderDataObj = {
+          id: randomOrderNum, // Use numeric ID for database
+          user_id: user.id,
+          order_number: orderIdString, // Store string version as order_number
+          status: 'Processing',
+          total_amount: total,
+          shipping_address: shippingAddressData,
+          payment_method: 'Paystack',
+          created_at: new Date().toISOString()
+        };
+  
+        // If no error during select, try to add payment_reference
+        if (!checkError) {
+          try {
+            // Try to include payment_reference in a safe way
+            // Insert order into the database with payment_reference
+            const { data: orderWithRef, error: orderWithRefError } = await supabase
+              .from('orders')
+              .insert([{
+                ...orderDataObj,
+                payment_reference: reference
+              }])
+              .select()
+              .single();
+              
+            if (!orderWithRefError) {
+              console.log("Order created with payment reference:", orderWithRef);
+            } else if (orderWithRefError.code === 'PGRST204') {
+              // Column doesn't exist, insert without it
+              const { data: orderNoRef, error: orderNoRefError } = await supabase
+                .from('orders')
+                .insert([orderDataObj])
+                .select()
+                .single();
+                
+              if (orderNoRefError) {
+                throw orderNoRefError;
+              }
+              console.log("Order created without payment reference:", orderNoRef);
+            } else {
+              throw orderWithRefError;
+            }
+          } catch (err) {
+            // Fall back to inserting without payment_reference
+            console.error("Error inserting order with reference, trying without:", err);
+            const { data: orderResult, error: orderError } = await supabase
+              .from('orders')
+              .insert([orderDataObj])
+              .select()
+              .single();
+              
+            if (orderError) throw orderError;
+          }
+        } else {
+          // Insert order into the database without payment_reference
+          const { data: orderResult, error: orderError } = await supabase
+            .from('orders')
+            .insert([orderDataObj])
+            .select()
+            .single();
+            
+          if (orderError) throw orderError;
+          console.log("Order created:", orderResult);
+        }
+      } catch (err) {
+        console.error("Error creating order:", err);
+        throw new Error("Failed to create order. Please try again.");
+      }
+      
+      // Save payment reference separately (for debugging/tracking)
+      console.log("Paystack payment reference:", reference);
+      
+      // Try to save payment reference to user_metadata 
+      try {
+        await supabase.auth.updateUser({
+          data: { 
+            last_payment_reference: reference,
+            last_order_id: randomOrderNum,
+            last_order_number: orderIdString
+          }
+        });
+      } catch (err) {
+        // Non-critical error, just log it
+        console.error("Could not save payment reference to user metadata:", err);
+      }
+      
+      // Save each order item
+      try {
+        const orderItems = state.cart.map(item => {
+          const product = cartProducts[item.product_id];
+          const price = product.discount_percentage
+            ? product.price * (1 - (product.discount_percentage / 100))
+            : product.price;
+          return {
+            order_id: randomOrderNum, // Use numeric ID here
+            product_id: item.product_id,
+            quantity: item.quantity,
+            price_per_unit: price,
+            subtotal: price * item.quantity
+          };
+        });
+        
+        const { error: itemsError } = await supabase
+          .from('order_items')
+          .insert(orderItems);
+          
+        if (itemsError) {
+          console.error("Error creating order items:", itemsError);
+          // Don't throw here, as the order is already created
+        }
+      } catch (err) {
+        console.error("Error saving order items:", err);
+        // Not throwing here since the order was created successfully
+      }
+      
+      // Save shipping address if requested and user is authenticated
+      if (shippingInfo.saveAddress && isAuthenticated) {
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          
+          if (user) {
+            // Check if the address already exists
+            const { data: existingAddresses, error: checkError } = await supabase
+              .from('shipping_addresses')
+              .select('*')
+              .eq('user_id', user.id)
+              .eq('address', shippingInfo.address);
+              
+            if (checkError) {
+              console.error('Error checking existing addresses:', checkError);
+            } else if (!existingAddresses || existingAddresses.length === 0) {
+              // Address doesn't exist, save it
+              await supabase.from('shipping_addresses').insert([{
+                user_id: user.id,
+                first_name: shippingInfo.firstName,
+                last_name: shippingInfo.lastName,
+                address: shippingInfo.address,
+                city: shippingInfo.city,
+                state: shippingInfo.state,
+                postal_code: shippingInfo.postalCode,
+                country: shippingInfo.country,
+                phone: shippingInfo.phone,
+                is_default: addressState.addresses.length === 0, // Make default if first address
+              }]);
+            }
+          }
+        } catch (error) {
+          console.error('Error saving address:', error);
+          // Not throwing error here, as this is non-critical
+        }
+      }
+      
+      // Clear the cart only after successful payment verification
+      clearCart();
+      
+      setOrderComplete(true);
+      window.scrollTo(0, 0);
+    } catch (err) {
+      console.error('Error verifying payment:', err);
+      setPaymentError(err instanceof Error ? err.message : 'Failed to verify payment. Please contact support.');
+    } finally {
+      setProcessingOrder(false);
+    }
+  };
+
+  const handlePaystackError = (error: any) => {
+    console.error('Paystack payment error:', error);
+    setPaymentError(error.message || 'Payment failed. Please try again.');
   };
 
   // Go back to previous step
@@ -1156,7 +1481,6 @@ const CheckoutPage: React.FC = () => {
             {/* Payment Information */}
             {activeStep === 'payment' && (
               <form onSubmit={handleContinueToReview}>
-                {/* Payment form content remains the same */}
                 <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
                   <h3 className="text-lg font-medium text-gray-900 dark:text-white">Payment Method</h3>
                 </div>
@@ -1183,6 +1507,7 @@ const CheckoutPage: React.FC = () => {
                             className="h-4 w-4 text-green-600 border-gray-300 dark:border-gray-600 focus:ring-green-500"
                           />
                         </div>
+                        
                         <div className="ml-3 flex-1 flex items-center">
                           <label 
                             htmlFor={`payment-${method.id}`} 
@@ -1309,6 +1634,38 @@ const CheckoutPage: React.FC = () => {
                     </div>
                   )}
                   
+                  {/* Paystack Payment */}
+                  {selectedPaymentMethod === 'paystack' && (
+                    <div className="mt-4">
+                      <PaystackPayment
+                        amount={total}
+                        email={shippingInfo.email || ''} 
+                        firstName={shippingInfo.firstName || ''} 
+                        lastName={shippingInfo.lastName || ''}
+                        onSuccess={handlePaystackSuccess}
+                        onClose={() => {
+                          setActiveStep('payment');
+                          setError('Payment was cancelled. Please try again or choose a different payment method.');
+                        }}
+                        onError={(error) => {
+                          setActiveStep('payment');
+                          setPaymentError(error?.message || 'Payment failed. Please try again.');
+                        }}
+                        currency="GHS"
+                      />
+                      {paymentError && (
+                        <div className="mt-4 bg-red-50 dark:bg-red-900/30 p-4 rounded-md">
+                          <div className="flex">
+                            <AlertCircle className="h-5 w-5 text-red-400 mt-0.5" />
+                            <div className="ml-3">
+                          <p className="text-sm text-red-700 dark:text-red-300">{paymentError}</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
                   {/* PayPal & Apple Pay Instructions */}
                   {selectedPaymentMethod === 'paypal' && (
                     <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-md text-sm text-gray-700 dark:text-gray-300 mt-4">
@@ -1321,31 +1678,9 @@ const CheckoutPage: React.FC = () => {
                       You will be prompted to complete your payment with Apple Pay after reviewing your order.
                     </div>
                   )}
-                  
-                  <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                    <h4 className="text-base font-medium text-gray-900 dark:text-white mb-4">Billing Address</h4>
-                    
-                    <div className="flex items-start">
-                      <input
-                        id="sameAsShipping"
-                        name="sameAsShipping"
-                        type="checkbox"
-                        className="h-4 w-4 mt-1 text-green-600 focus:ring-green-500 border-gray-300 dark:border-gray-600 rounded"
-                        defaultChecked
-                      />
-                      <div className="ml-3">
-                        <label htmlFor="sameAsShipping" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                          Same as shipping address
-                        </label>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                          {shippingInfo.address}, {shippingInfo.city}, {shippingInfo.state} {shippingInfo.postalCode}, {shippingInfo.country}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
                 </div>
                 
-                <div className="px-6 py-5 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                <div className="px-6 py-5 border-t border-gray-200 dark:border-gray-700">
                   <button
                     type="button"
                     onClick={handleGoBack}
@@ -1353,12 +1688,6 @@ const CheckoutPage: React.FC = () => {
                   >
                     <ChevronLeft className="w-4 h-4 mr-1" />
                     Back to Shipping
-                  </button>
-                  <button
-                    type="submit"
-                    className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                  >
-                    Review Order
                   </button>
                 </div>
               </form>

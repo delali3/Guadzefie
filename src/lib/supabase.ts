@@ -65,22 +65,14 @@ export interface User {
 
 export interface Order {
   id: number;
-  user_id: string;
-  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
-  total_amount: number;
-  shipping_address: {
-    street: string;
-    city: string;
-    state: string;
-    postal_code: string;
-    country: string;
-  };
-  payment_method: string;
+  order_number?: string;
   created_at: string;
-  updated_at: string;
-  tracking_number: string | null;
-  shipped_at: string | null;
-  delivered_at: string | null;
+  status: string;
+  total_amount: number;
+  user_id: string;
+  payment_method?: string;
+  shipping_address?: any;
+  tracking_number?: string;
 }
 
 export interface OrderItem {

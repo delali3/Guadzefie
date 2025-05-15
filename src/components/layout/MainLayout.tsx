@@ -24,6 +24,13 @@ interface MainLayoutProps {
   isAuthenticated: boolean;
 }
 
+interface Category {
+  id: number;
+  name: string;
+  slug: string;
+  description?: string | null;
+}
+
 const MainLayout: React.FC<MainLayoutProps> = ({
   darkMode,
   toggleDarkMode,
@@ -41,16 +48,30 @@ const MainLayout: React.FC<MainLayoutProps> = ({
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [scrolled, setScrolled] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
 
-  // Farm categories - in a real app these would come from an API
-  const categories = [
-    { id: 1, name: 'Root Crops', slug: 'root-crops' },
-    { id: 2, name: 'Fruits', slug: 'fruits' },
-    { id: 3, name: 'Vegetables', slug: 'vegetables' },
-    { id: 4, name: 'Grains & Cereals', slug: 'grains-cereals' },
-    { id: 5, name: 'Cash Crops', slug: 'cash-crops' },
-    { id: 6, name: 'Farm Supplies', slug: 'farm-supplies' }
-  ];
+  // Fetch categories from the database
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('categories')
+          .select('id, name, slug, description')
+          .order('name');
+
+        if (error) {
+          console.error('Error fetching categories:', error);
+          return;
+        }
+
+        setCategories(data || []);
+      } catch (err) {
+        console.error('Error fetching categories:', err);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   // Calculate cart item count
   const cartItemCount = cart.reduce((total, item) => total + item.quantity, 0);

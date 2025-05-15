@@ -436,6 +436,7 @@ const ProductPage: React.FC = () => {
                 value={quantity}
                 onChange={handleQuantityChange}
                 disabled={product.inventory_count === 0}
+                aria-label="Select quantity"
                 className="bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-green-500 focus:border-green-500 block w-full p-2.5"
               >
                 {[...Array(Math.min(10, product.inventory_count || 0))].map((_, i) => (

@@ -1,1 +1,117 @@
-@import "tailwindcss";
+/* @tailwind base;
+@tailwind components;
+@tailwind utilities; */
+
+/* Custom theme styles - enhanced */
+:root {
+  /* Light mode */
+  --bg-light: #f9fafb;  /* Slightly off-white for better contrast */
+  --bg-card-light: #ffffff;
+  --text-light: #1f2937;
+  --text-secondary-light: #4b5563;
+  --border-light: #e5e7eb;
+  
+  /* Dark mode */
+  --bg-dark: #111827;  /* Darker background for better contrast */
+  --bg-card-dark: #1f2937;
+  --text-dark: #f9fafb;
+  --text-secondary-dark: #9ca3af;
+  --border-dark: #374151;
+}
+
+/* Light mode (default) */
+body {
+  background-color: var(--bg-light);
+  color: var(--text-light);
+  transition: background-color 300ms ease, color 300ms ease;
+}
+
+/* Dark mode */
+.dark body {
+  background-color: var(--bg-dark);
+  color: var(--text-dark);
+}
+
+/* Main background */
+.theme-bg {
+  background-color: var(--bg-light);
+  transition: background-color 300ms ease;
+}
+
+.dark .theme-bg {
+  background-color: var(--bg-dark);
+}
+
+/* Card/container backgrounds */
+.theme-card {
+  background-color: var(--bg-card-light);
+  border-color: var(--border-light);
+  transition: background-color 300ms ease, border-color 300ms ease;
+}
+
+.dark .theme-card {
+  background-color: var(--bg-card-dark);
+  border-color: var(--border-dark);
+}
+
+/* Text colors */
+.theme-text {
+  color: var(--text-light);
+  transition: color 300ms ease;
+}
+
+.dark .theme-text {
+  color: var(--text-dark);
+}
+
+.theme-text-secondary {
+  color: var(--text-secondary-light);
+  transition: color 300ms ease;
+}
+
+.dark .theme-text-secondary {
+  color: var(--text-secondary-dark);
+}
+
+/* Borders */
+.theme-border {
+  border-color: var(--border-light);
+  transition: border-color 300ms ease;
+}
+
+.dark .theme-border {
+  border-color: var(--border-dark);
+}
+
+/* Add border styles */
+.border-t.theme-border {
+  border-top-width: 1px;
+}
+
+.border-b.theme-border {
+  border-bottom-width: 1px;
+}
+
+.border-r.theme-border {
+  border-right-width: 1px;
+}
+
+.border-l.theme-border {
+  border-left-width: 1px;
+}
+
+.border.theme-border {
+  border-width: 1px;
+}
+
+/* Debug panel */
+.debug-theme {
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  padding: 8px;
+  background: #ff5722;
+  color: white;
+  z-index: 9999;
+  border-radius: 4px;
+}

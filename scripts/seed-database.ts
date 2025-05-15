@@ -10,40 +10,40 @@ async function seedDatabase() {
       .from('categories')
       .insert([
         {
-          name: 'Electronics',
-          description: 'Latest gadgets and tech accessories',
-          slug: 'electronics',
-          image_url: 'https://source.unsplash.com/random/800x600/?electronics'
+          name: 'Root Crops',
+          description: 'Yams, cassava, sweet potatoes and other tubers',
+          slug: 'root-crops',
+          image_url: 'https://source.unsplash.com/random/800x600/?yams'
         },
         {
-          name: 'Fashion',
-          description: 'Trendy clothing and accessories',
-          slug: 'fashion',
-          image_url: 'https://source.unsplash.com/random/800x600/?fashion'
+          name: 'Fruits',
+          description: 'Fresh tropical and seasonal fruits',
+          slug: 'fruits',
+          image_url: 'https://source.unsplash.com/random/800x600/?tropical-fruits'
         },
         {
-          name: 'Home',
-          description: 'Furniture and home decor',
-          slug: 'home',
-          image_url: 'https://source.unsplash.com/random/800x600/?home'
+          name: 'Vegetables',
+          description: 'Locally grown vegetables and leafy greens',
+          slug: 'vegetables',
+          image_url: 'https://source.unsplash.com/random/800x600/?vegetables'
         },
         {
-          name: 'Sports',
-          description: 'Equipment for all sports and activities',
-          slug: 'sports',
-          image_url: 'https://source.unsplash.com/random/800x600/?sports'
+          name: 'Grains & Cereals',
+          description: 'Rice, maize, millet and other grains',
+          slug: 'grains-cereals',
+          image_url: 'https://source.unsplash.com/random/800x600/?grains'
         },
         {
-          name: 'Beauty',
-          description: 'Skincare, makeup, and personal care',
-          slug: 'beauty',
-          image_url: 'https://source.unsplash.com/random/800x600/?beauty'
+          name: 'Cash Crops',
+          description: 'Cocoa, coffee, and other export crops',
+          slug: 'cash-crops',
+          image_url: 'https://source.unsplash.com/random/800x600/?cocoa'
         },
         {
-          name: 'Books',
-          description: 'Bestsellers and new releases',
-          slug: 'books',
-          image_url: 'https://source.unsplash.com/random/800x600/?books'
+          name: 'Farm Supplies',
+          description: 'Tools, seeds, and farming equipment',
+          slug: 'farm-supplies',
+          image_url: 'https://source.unsplash.com/random/800x600/?farm-tools'
         }
       ])
       .select();

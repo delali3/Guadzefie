@@ -89,11 +89,11 @@ const LoginPage: React.FC = () => {
       localStorage.setItem('user', JSON.stringify(sessionData));
 
       // Redirect based on user type
-      // console.log("Redirecting user based on type:", user.is_farm);
+      console.log("Redirecting user based on type:", user.is_farm);
       if (user.is_farm) {
-        navigate('/farm');
+        navigate('/farm/dashboard');
       } else {
-        navigate('/consumer');
+        navigate('/consumer/dashboard');
       }
 
     } catch (err) {
