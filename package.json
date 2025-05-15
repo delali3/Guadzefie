@@ -9,15 +9,16 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "seed-database": "ts-node scripts/seed-database.ts",
-    "update-categories": "node scripts/update-categories.js"
+    "update-categories": "node scripts/update-categories.js",
+    "apply-migration": "node scripts/apply-migration.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.4",
     "@tailwindcss/vite": "^4.1.3",
     "bcryptjs": "^3.0.2",
     "lucide-react": "^0.485.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "react-hot-toast": "^2.5.2",
     "react-paystack": "^6.0.0",
     "react-router-dom": "^7.4.1",

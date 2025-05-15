@@ -52,3 +52,35 @@ export default tseslint.config({
   },
 })
 ```
+
+# Guadzefie - Farm to Table E-commerce Platform
+
+## Address Management Feature
+
+The application now includes a complete address management system for users. This feature allows customers to:
+
+- Add multiple delivery addresses
+- Edit existing addresses
+- Delete addresses
+- Set a default address for faster checkout
+
+### Setting Up the Address Feature
+
+To set up the address management feature in your database, run:
+
+```bash
+npm run apply-migration
+```
+
+This will create the necessary `shipping_addresses` table in your Supabase database along with appropriate security policies.
+
+If you encounter permissions issues, you can manually run the migration SQL through the Supabase dashboard:
+
+1. Go to your Supabase project dashboard
+2. Navigate to the SQL Editor tab
+3. Create a new query and paste the content of `scripts/migrations/create_shipping_addresses_table.sql`
+4. Run the query
+
+### Using the Address Feature
+
+Once set up, users can manage their addresses by navigating to the "Delivery Addresses" section in their account. The system automatically syncs with the database and ensures only one address can be set as default.
