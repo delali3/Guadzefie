@@ -1,0 +1,153 @@
+/* @tailwind base;
+@tailwind components;
+@tailwind utilities; */
+
+/* Custom theme styles - enhanced */
+:root {
+  /* Light mode */
+  --bg-light: #f9fafb;  /* Slightly off-white for better contrast */
+  --bg-card-light: #ffffff;
+  --text-light: #1f2937;
+  --text-secondary-light: #4b5563;
+  --border-light: #e5e7eb;
+  
+  /* Dark mode */
+  --bg-dark: #111827;  /* Darker background for better contrast */
+  --bg-card-dark: #1f2937;
+  --text-dark: #f9fafb;
+  --text-secondary-dark: #9ca3af;
+  --border-dark: #374151;
+}
+
+/* Global input styling - make inputs larger */
+input,
+select,
+textarea,
+button[type="submit"],
+.input,
+.form-input,
+.form-select,
+.form-textarea {
+  font-size: 1.05rem !important; /* Larger text */
+  padding: 0.625rem 0.75rem !important; /* More padding */
+  line-height: 1.5 !important;
+  min-height: 2.75rem !important; /* Ensure minimum height */
+}
+
+/* Make search boxes and smaller inputs not too large */
+input[type="search"],
+.search-input {
+  min-height: 2.5rem !important;
+}
+
+/* Range sliders should maintain normal styling */
+input[type="range"] {
+  padding: 0 !important;
+  min-height: unset !important;
+}
+
+/* Make checkboxes and radio buttons slightly larger */
+input[type="checkbox"],
+input[type="radio"] {
+  width: 1.25rem !important;
+  height: 1.25rem !important;
+  min-height: unset !important;
+  padding: 0 !important;
+}
+
+/* Light mode (default) */
+body {
+  background-color: var(--bg-light);
+  color: var(--text-light);
+  transition: background-color 300ms ease, color 300ms ease;
+}
+
+/* Dark mode */
+.dark body {
+  background-color: var(--bg-dark);
+  color: var(--text-dark);
+}
+
+/* Main background */
+.theme-bg {
+  background-color: var(--bg-light);
+  transition: background-color 300ms ease;
+}
+
+.dark .theme-bg {
+  background-color: var(--bg-dark);
+}
+
+/* Card/container backgrounds */
+.theme-card {
+  background-color: var(--bg-card-light);
+  border-color: var(--border-light);
+  transition: background-color 300ms ease, border-color 300ms ease;
+}
+
+.dark .theme-card {
+  background-color: var(--bg-card-dark);
+  border-color: var(--border-dark);
+}
+
+/* Text colors */
+.theme-text {
+  color: var(--text-light);
+  transition: color 300ms ease;
+}
+
+.dark .theme-text {
+  color: var(--text-dark);
+}
+
+.theme-text-secondary {
+  color: var(--text-secondary-light);
+  transition: color 300ms ease;
+}
+
+.dark .theme-text-secondary {
+  color: var(--text-secondary-dark);
+}
+
+/* Borders */
+.theme-border {
+  border-color: var(--border-light);
+  transition: border-color 300ms ease;
+}
+
+.dark .theme-border {
+  border-color: var(--border-dark);
+}
+
+/* Add border styles */
+.border-t.theme-border {
+  border-top-width: 1px;
+}
+
+.border-b.theme-border {
+  border-bottom-width: 1px;
+}
+
+.border-r.theme-border {
+  border-right-width: 1px;
+}
+
+.border-l.theme-border {
+  border-left-width: 1px;
+}
+
+.border.theme-border {
+  border-width: 1px;
+}
+
+/* Debug panel */
+.debug-theme {
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  padding: 8px;
+  background: #ff5722;
+  color: white;
+  z-index: 9999;
+  border-radius: 4px;
+}

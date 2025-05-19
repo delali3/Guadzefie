@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: guadzefie
+    env: static
+    buildCommand: npm run build  # Adjust this based on your actual build command
+    staticPublishPath: ./dist  # Adjust if your build outputs to a different directory
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable
+      - path: /dist/output.css
+        name: Content-Type
+        value: text/css
+      - path: /*.js
+        name: Content-Type
+        value: application/javascript
+      - path: /*
+        name: Access-Control-Allow-Origin
+        value: "*"
+    routes:
+      - type: rewrite
+        source: /.*
+        destination: /index.html 

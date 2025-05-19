@@ -1,0 +1,21 @@
+# Add the correct MIME type for CSS files
+<IfModule mod_mime.c>
+    AddType text/css .css
+</IfModule>
+
+# Enable Cross-Origin Resource Sharing (CORS)
+<IfModule mod_headers.c>
+    <FilesMatch "\.(css|js)$">
+        Header set Access-Control-Allow-Origin "*"
+    </FilesMatch>
+</IfModule>
+
+# Set proper cache control for static assets
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 1 year"
+    ExpiresByType application/javascript "access plus 1 year"
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 year"
+</IfModule> 
