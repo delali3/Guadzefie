@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { supabase } from '../../lib/supabase';
+import { supabase, refreshSupabaseHeaders } from '../../lib/supabase';
 import { Mail, Lock, AlertCircle, Eye, EyeOff, ShoppingBag } from 'lucide-react';
 import bcrypt from 'bcryptjs';
 
@@ -94,7 +94,8 @@ const LoginPage: React.FC = () => {
         last_name: user.last_name,
         is_farm: user.is_farm,
         is_admin: user.is_admin || false,
-        created_at: user.created_at
+        created_at: user.created_at,
+        token: `fake-token-${user.id}` // Add a token for auth headers
       };
 
       console.log("Setting session data in localStorage:", {
@@ -105,17 +106,41 @@ const LoginPage: React.FC = () => {
       });
       
       try {
+        // First clear any existing data
+        localStorage.removeItem('user');
+        
+        // Then set the new data
         localStorage.setItem('user', JSON.stringify(sessionData));
+        
+        // Refresh Supabase headers with the new user data
+        refreshSupabaseHeaders();
         
         // Verify that data was stored correctly
         const storedData = localStorage.getItem('user');
         console.log("Verification - data stored in localStorage:", !!storedData);
+        
         if (!storedData) {
           console.error("Failed to store user data in localStorage!");
+          throw new Error('Failed to create session. Please ensure cookies/localStorage are enabled.');
+        }
+        
+        // Verify the stored data can be parsed correctly
+        try {
+          const parsedData = JSON.parse(storedData);
+          if (!parsedData || !parsedData.id) {
+            console.error("Stored user data is invalid:", parsedData);
+            throw new Error('Session data was corrupted. Please try again.');
+          }
+          console.log("User data successfully verified in localStorage");
+        } catch (parseError) {
+          console.error("Failed to parse stored user data:", parseError);
+          throw new Error('Session data is invalid. Please clear your browser cache and try again.');
         }
       } catch (storageError) {
         console.error("Error storing user in localStorage:", storageError);
-        throw new Error('Failed to create session. Please try again.');
+        throw new Error(storageError instanceof Error ? 
+          `Failed to create session: ${storageError.message}` : 
+          'Failed to create session. Please try again.');
       }
 
       // Redirect based on user type

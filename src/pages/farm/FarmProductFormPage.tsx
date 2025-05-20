@@ -20,11 +20,17 @@ interface Product {
   category: string;
   image_url: string | null;
   image_urls?: string[];
+  additional_images?: string[];
   is_organic: boolean;
   is_active: boolean;
+  is_available?: boolean;
   farmer_id?: string;
   vendor_id?: string;
   owner_id?: string;
+  min_order_quantity?: number;
+  region_of_origin?: string;
+  storage_instructions?: string;
+  views_count?: number;
 }
 
 interface FormData {
@@ -99,6 +105,9 @@ const FarmProductFormPage: React.FC = () => {
 
           if (productError) throw productError;
 
+          // Add debugging to see what's being returned from the database
+          console.log('Product data retrieved from database:', productData);
+
           if (productData) {
             // Check if the product belongs to the current user using any of the possible ID fields
             const belongsToUser = 
@@ -110,27 +119,67 @@ const FarmProductFormPage: React.FC = () => {
               throw new Error("You don't have permission to edit this product");
             }
 
-            // Set form data
-            setFormData({
+            // Debug what we're getting from the database for each field
+            console.log('Product data field values:', {
               name: productData.name,
               description: productData.description,
-              price: productData.price.toString(),
-              inventory_count: productData.inventory_count.toString(),
+              price: productData.price,
+              inventory_count: productData.inventory_count,
               category: productData.category,
-              is_organic: productData.is_organic || false,
-              is_active: productData.is_active ?? true,
+              is_organic: productData.is_organic,
+              is_active: productData.is_active,
+              image_url: productData.image_url,
+              image_urls: productData.image_urls,
+              additional_images: productData.additional_images
+            });
+
+            // Set form data with better null/undefined handling
+            setFormData({
+              name: productData.name !== null && productData.name !== undefined ? productData.name : '',
+              description: productData.description !== null && productData.description !== undefined ? productData.description : '',
+              price: productData.price !== null && productData.price !== undefined ? String(productData.price) : '0',
+              inventory_count: productData.inventory_count !== null && productData.inventory_count !== undefined ? String(productData.inventory_count) : '0',
+              category: productData.category !== null && productData.category !== undefined ? productData.category : '',
+              is_organic: productData.is_organic === true,
+              is_active: productData.is_active !== false, // Default to true unless explicitly false
               image: null,
               images: []
+            });
+
+            // Log what's being set to form data
+            console.log('Setting form data to:', {
+              name: productData.name !== null && productData.name !== undefined ? productData.name : '',
+              description: productData.description !== null && productData.description !== undefined ? productData.description : '',
+              price: productData.price !== null && productData.price !== undefined ? String(productData.price) : '0',
+              inventory_count: productData.inventory_count !== null && productData.inventory_count !== undefined ? String(productData.inventory_count) : '0',
+              category: productData.category !== null && productData.category !== undefined ? productData.category : '',
+              is_organic: productData.is_organic === true,
+              is_active: productData.is_active !== false
             });
 
             // Set preview URL for main image
             if (productData.image_url) {
               setPreviewUrl(productData.image_url);
+              console.log('Setting preview URL:', productData.image_url);
             }
             
-            // Set preview URLs for additional images
+            // Check for additional images in both possible database fields
+            let additionalImages = [];
+            
+            // Try image_urls first (used in form)
             if (productData.image_urls && Array.isArray(productData.image_urls) && productData.image_urls.length > 0) {
-              setPreviewUrls(productData.image_urls);
+              additionalImages = productData.image_urls;
+              console.log('Found image_urls:', productData.image_urls);
+            } 
+            // Then try additional_images (used in database)
+            else if (productData.additional_images && Array.isArray(productData.additional_images) && productData.additional_images.length > 0) {
+              additionalImages = productData.additional_images;
+              console.log('Found additional_images:', productData.additional_images);
+            }
+            
+            if (additionalImages.length > 0) {
+              setPreviewUrls(additionalImages);
+              console.log('Setting preview URLs for additional images:', additionalImages);
             }
           }
         }
@@ -144,6 +193,13 @@ const FarmProductFormPage: React.FC = () => {
 
     fetchData();
   }, [id, isEditMode]);
+
+  // Debug useEffect to monitor form data changes
+  useEffect(() => {
+    if (!isLoading && formData.name) {
+      console.log('Form data changed:', formData);
+    }
+  }, [formData, isLoading]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -347,6 +403,7 @@ const FarmProductFormPage: React.FC = () => {
         category: formData.category.trim(),
         image_url: imageUrl,
         image_urls: imageUrls.length > 0 ? imageUrls : undefined,
+        additional_images: imageUrls.length > 0 ? imageUrls : undefined,
         is_organic: formData.is_organic,
         is_active: formData.is_active,
       };
@@ -388,14 +445,23 @@ const FarmProductFormPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+      <div className="flex flex-col justify-center items-center h-64 bg-white dark:bg-gray-800 rounded-lg shadow p-8">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500 mb-4"></div>
+        <p className="text-gray-600 dark:text-gray-400 text-lg font-semibold">Loading product data...</p>
+        <p className="text-gray-500 dark:text-gray-500 text-sm mt-2">Please wait while we fetch your product information</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
+      {/* Debug display */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="hidden">
+          <pre>Debug Form Data: {JSON.stringify(formData, null, 2)}</pre>
+        </div>
+      )}
+      
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
         <div className="flex items-center justify-between">
           <div className="flex flex-col">

@@ -103,7 +103,13 @@ const OrdersPage: React.FC = () => {
 
       if (ordersError) throw ordersError;
 
-      setOrders(data || []);
+      // Fix the type issue by properly transforming the data
+      const typedOrders: Order[] = data?.map((order: any) => ({
+        ...order,
+        user: Array.isArray(order.user) && order.user.length > 0 ? order.user[0] : null
+      })) || [];
+
+      setOrders(typedOrders);
       setTotalOrders(count || 0);
     } catch (error) {
       console.error('Error fetching orders:', error);
@@ -212,6 +218,8 @@ const OrdersPage: React.FC = () => {
           <select
             value={statusFilter}
             onChange={handleStatusFilterChange}
+            aria-label="Filter orders by status"
+            title="Order status filter"
             className="pl-10 py-2 pr-3 w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white appearance-none"
           >
             {statusOptions.map(option => (

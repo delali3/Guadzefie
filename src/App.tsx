@@ -38,6 +38,11 @@ import { Toaster } from 'react-hot-toast';
 import AdminDashboardPage from './pages/admin/DashboardPage';
 import AdminProductsPage from './pages/admin/AdminProductsPage';
 import ProductFormPage from './pages/admin/ProductFormPage';
+import AdminOrdersPage from './pages/admin/OrdersPage';
+import AdminCustomersPage from './pages/admin/CustomersPage';
+import AdminSettingsPage from './pages/admin/SettingsPage';
+import CategoryManagementPage from './pages/admin/CategoryManagementPage';
+import DiscountPage from './pages/admin/DiscountPage';
 
 // Farm Pages
 import FarmDashboardPage from './pages/farm/FarmDashboardPage';
@@ -55,14 +60,14 @@ import AddProductPage from './pages/farm/AddProductPage';
 
 // Consumer Pages
 import ConsumerDashboardPage from './pages/consumer/ConsumerDashboardPage';
-import OrdersPage from './pages/consumer/OrdersPage';
+import ConsumerOrdersPage from './pages/consumer/OrdersPage';
 import OrderDetailsPage from './pages/consumer/OrderDetailsPage';
 import PaymentMethodsPage from './pages/consumer/PaymentMethodsPage';
 import ConsumerWishlistPage from './pages/consumer/WishlistPage';
 import AddressPage from './pages/consumer/AddressPage';
 import SubscriptionPage from './pages/consumer/SubscriptionPage';
 import ProfilePage from './pages/consumer/ProfilePage';
-import SettingsPage from './pages/consumer/SettingsPage';
+import ConsumerSettingsPage from './pages/consumer/SettingsPage';
 
 // Declare the debug navigation interface
 interface DebugNavigation {
@@ -352,14 +357,14 @@ const App: React.FC = () => {
                       {/* Redirect from /consumer to /consumer/dashboard */}
                       <Route path="" element={<Navigate to="/consumer/dashboard" replace />} />
                       {/* Consumer routes */}
-                      <Route path="orders" element={<OrdersPage />} />
+                      <Route path="orders" element={<ConsumerOrdersPage />} />
                       <Route path="orders/:id" element={<OrderDetailsPage />} />
                       <Route path="wishlist" element={<ConsumerWishlistPage />} />
                       <Route path="payment" element={<PaymentMethodsPage />} />
                       <Route path="address" element={<AddressPage />} />
                       <Route path="subscription" element={<SubscriptionPage />} />
                       <Route path="profile" element={<ProfilePage />} />
-                      <Route path="settings" element={<SettingsPage darkMode={darkMode} toggleDarkMode={toggleDarkMode} />} />
+                      <Route path="settings" element={<ConsumerSettingsPage darkMode={darkMode} toggleDarkMode={toggleDarkMode} />} />
                     </Route>
                   </Route>
 
@@ -370,9 +375,15 @@ const App: React.FC = () => {
                       element={<AdminLayout darkMode={darkMode} toggleDarkMode={toggleDarkMode} />}
                     >
                       <Route path="" element={<AdminDashboardPage />} />
+                      <Route path="dashboard" element={<AdminDashboardPage />} />
                       <Route path="products" element={<AdminProductsPage />} />
                       <Route path="products/new" element={<ProductFormPage />} />
                       <Route path="products/:id/edit" element={<ProductFormPage />} />
+                      <Route path="categories" element={<CategoryManagementPage />} />
+                      <Route path="discounts" element={<DiscountPage />} />
+                      <Route path="orders" element={<AdminOrdersPage />} />
+                      <Route path="customers" element={<AdminCustomersPage />} />
+                      <Route path="settings" element={<AdminSettingsPage />} />
                     </Route>
                   </Route>
 

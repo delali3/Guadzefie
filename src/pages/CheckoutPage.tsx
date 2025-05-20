@@ -11,7 +11,8 @@ import {
   Check, 
   ShieldCheck, 
   Lock,
-  AlertCircle
+  AlertCircle,
+  User
 } from 'lucide-react';
 import PaystackPayment from '../components/payment/PaystackPayment';
 
@@ -50,6 +51,7 @@ const CheckoutPage: React.FC = () => {
   const [processingOrder, setProcessingOrder] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [orderTotal, setOrderTotal] = useState<number | null>(null);
   
   // Form states
   const [activeStep, setActiveStep] = useState<'shipping' | 'payment' | 'review'>('shipping');
@@ -58,7 +60,8 @@ const CheckoutPage: React.FC = () => {
     lastName: '',
     email: '',
     phone: '',
-    address: '',
+    address: '', // Changed from address_line1 to address
+    address_line2: '',
     city: '',
     state: '',
     postalCode: '',
@@ -128,21 +131,94 @@ const CheckoutPage: React.FC = () => {
     }
   ];
 
-  // Check authentication status
+  // Check authentication status and fetch user profile data
   useEffect(() => {
-    const checkAuth = async () => {
-      const { data } = await supabase.auth.getSession();
-      setIsAuthenticated(!!data.session);
+    const checkAuthAndFetchUserData = async () => {
+      try {
+        // Check if user is logged in via localStorage
+        const storedUser = localStorage.getItem('user');
+        const isUserAuthenticated = !!storedUser;
+        setIsAuthenticated(isUserAuthenticated);
+        
+        // If authenticated, fetch user profile data to pre-fill the form
+        if (isUserAuthenticated && storedUser) {
+          const user = JSON.parse(storedUser);
+          const userId = user.id;
+          
+          // First try to fetch from the profiles table
+          let { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('first_name, last_name, phone, address')
+            .eq('id', userId)
+            .single();
+            
+          if (profileData) {
+            // Extract address data from JSONB if available
+            let addressData: { 
+              address?: string; 
+              city?: string; 
+              state?: string; 
+              postal_code?: string; 
+              country?: string; 
+            } = {};
+            
+            if (profileData.address && typeof profileData.address === 'object') {
+              addressData = profileData.address;
+            }
+            
+            // Update shipping info with profile data
+            setShippingInfo(prev => ({
+              ...prev,
+              firstName: profileData.first_name || prev.firstName,
+              lastName: profileData.last_name || prev.lastName,
+              phone: profileData.phone || prev.phone,
+              address: addressData.address || prev.address,
+              city: addressData.city || prev.city,
+              state: addressData.state || prev.state,
+              postalCode: addressData.postal_code || prev.postalCode,
+              country: addressData.country || prev.country,
+            }));
+          }
+          
+          // Try to get user email from the custom user object
+          if (user.email) {
+            setShippingInfo(prev => ({
+              ...prev,
+              email: user.email || prev.email,
+            }));
+          }
+          
+          // If we don't have a complete profile, try to get data from default shipping address
+          const { data: defaultAddressData } = await supabase
+            .from('shipping_addresses')
+            .select('*')
+            .eq('user_id', userId)
+            .eq('is_default', true)
+            .single();
+            
+          if (defaultAddressData) {
+            setShippingInfo(prev => ({
+              ...prev,
+              firstName: defaultAddressData.first_name || prev.firstName,
+              lastName: defaultAddressData.last_name || prev.lastName,
+              phone: defaultAddressData.phone || prev.phone,
+              address: defaultAddressData.address || prev.address,
+              city: defaultAddressData.city || prev.city, 
+              state: defaultAddressData.state || prev.state,
+              postalCode: defaultAddressData.postal_code || prev.postalCode,
+              country: defaultAddressData.country || prev.country,
+            }));
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching user data:', err);
+      }
     };
 
-    checkAuth();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsAuthenticated(!!session);
-    });
+    checkAuthAndFetchUserData();
 
     return () => {
-      subscription.unsubscribe();
+      // No cleanup needed
     };
   }, []);
 
@@ -153,8 +229,14 @@ const CheckoutPage: React.FC = () => {
       setError(null);
       
       try {
-        // Redirect to cart if empty
-        if (state.cart.length === 0 && !orderComplete) {
+        // If order is complete, we don't need to fetch products anymore
+        if (orderComplete) {
+          setIsLoading(false);
+          return;
+        }
+        
+        // Redirect to cart if empty and not order complete
+        if (state.cart.length === 0) {
           navigate('/cart');
           return;
         }
@@ -248,7 +330,7 @@ const CheckoutPage: React.FC = () => {
       shippingInfo.firstName !== address.first_name ||
       shippingInfo.lastName !== address.last_name ||
       shippingInfo.phone !== address.phone ||
-      shippingInfo.address !== address.address_line1 ||
+      shippingInfo.address !== (address.address || address.address_line1 || '') ||
       shippingInfo.city !== address.city ||
       shippingInfo.state !== address.state ||
       shippingInfo.postalCode !== address.postal_code ||
@@ -257,9 +339,10 @@ const CheckoutPage: React.FC = () => {
       setShippingInfo({
         firstName: address.first_name,
         lastName: address.last_name,
-        email: shippingInfo.email, // Preserve existing email
+        email: address.email || shippingInfo.email, // Use address email if available
         phone: address.phone,
-        address: address.address_line1,
+        address: address.address || address.address_line1 || '', // Add empty string fallback
+        address_line2: address.address_line2 || '',
         city: address.city,
         state: address.state,
         postalCode: address.postal_code,
@@ -434,6 +517,32 @@ const CheckoutPage: React.FC = () => {
     }
   };
 
+  // Helper function to convert numeric ID to UUID format if needed
+  const getUserIdForDatabase = (userId: string | number | null | undefined): string => {
+    // Handle null or undefined by returning a default UUID
+    if (userId === null || userId === undefined) {
+      console.log('Received null or undefined ID, using default UUID');
+      return '00000000-0000-0000-0000-000000000000';
+    }
+    
+    // If already a UUID format, return as is
+    if (typeof userId === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId)) {
+      return userId;
+    }
+    
+    // If it's a numeric ID, create a deterministic UUID v5 from it
+    // Use a namespace UUID (this is arbitrary but consistent)
+    const namespace = '6ba7b810-9dad-11d1-80b4-00c04fd430c8';
+    
+    // For simplicity, we'll just pad and format it to look like a UUID
+    // This is a workaround - in production, you might want to use a proper UUID generation library
+    const idStr = String(userId).padStart(8, '0');
+    const formattedUuid = `${idStr.slice(0, 8)}-0000-0000-0000-000000000000`;
+    
+    console.log(`Converting ID ${userId} to UUID format: ${formattedUuid}`);
+    return formattedUuid;
+  };
+  
   const handlePlaceOrder = async () => {
     try {
       setProcessingOrder(true);
@@ -443,114 +552,81 @@ const CheckoutPage: React.FC = () => {
       const randomOrderNum = Math.floor(Math.random() * 1000000) + 1000;
       const orderIdString = `ORD-${randomOrderNum}`;
       
-      // Get the user ID from localStorage
+      // Check if user is authenticated via localStorage
       const storedUser = localStorage.getItem('user');
+      console.log("Auth check: User in localStorage:", !!storedUser);
+      
       if (!storedUser) {
+        console.error("No user found in localStorage");
         throw new Error("You must be logged in to place an order");
       }
       
-      const user = JSON.parse(storedUser);
-      if (!user || !user.id) {
-        throw new Error("Invalid user session. Please log in again.");
-      }
-      
-      // Calculate cart totals
-      const { total } = calculateCartTotals();
-      
-      // Create order in database
-      const { data: _orderResult, error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          user_id: user.id,
-          order_number: orderIdString,
-          status: 'Processing',
-          total_amount: total,
-          shipping_address: {
-            address: shippingInfo.address,
-            city: shippingInfo.city,
-            state: shippingInfo.state,
-            postal_code: shippingInfo.postalCode,
-            country: shippingInfo.country
-          },
-          payment_method: selectedPaymentMethod,
-          created_at: new Date().toISOString()
-        });
+      // Parse the user data and get the user ID
+      try {
+        const user = JSON.parse(storedUser);
+        if (!user || !user.id) {
+          console.error("Invalid user data in localStorage");
+          throw new Error("Invalid user session. Please log in again.");
+        }
         
-      if (orderError) {
-        console.error("Error creating order:", orderError);
-        setProcessingOrder(true);
-        setError(null);
-        setPaymentError(null);
+        console.log("Processing order for user ID:", user.id);
         
+        // Get UUID formatted user ID for database
+        const databaseUserId = getUserIdForDatabase(user.id);
+        console.log("Using formatted user ID for database:", databaseUserId);
+        
+        // Calculate cart totals
+        const { total } = calculateCartTotals();
+  
+        // Special handling for Paystack payment method
+        if (selectedPaymentMethod === 'paystack') {
+          // For Paystack, we don't place the order yet, instead redirect to payment
+          // The order will be created after successful payment
+          setActiveStep('payment');
+          setProcessingOrder(false);
+          return;
+        }
+        
+        // Create order in database
+        const { data: orderData, error: orderError } = await supabase
+          .from('orders')
+          .insert({
+            id: getUserIdForDatabase(randomOrderNum), // Format order ID as UUID
+            user_id: databaseUserId, // Use UUID formatted ID
+            order_number: orderIdString,
+            status: 'Processing',
+            total_amount: total,
+            shipping_address: {
+              address: shippingInfo.address,
+              city: shippingInfo.city,
+              state: shippingInfo.state,
+              postal_code: shippingInfo.postalCode,
+              country: shippingInfo.country
+            },
+            payment_method: selectedPaymentMethod,
+            created_at: new Date().toISOString()
+          })
+          .select()
+          .single();
+          
+        if (orderError) {
+          console.error("Error creating order:", orderError);
+          throw new Error("Failed to create order. Please try again.");
+        }
+        
+        console.log("Order created:", orderData);
+        setOrderNumber(orderIdString);
+        
+        // Save each order item
         try {
-          if (selectedPaymentMethod === 'paystack') {
-            // For Paystack, we don't clear the cart here
-            // The cart will be cleared only after successful payment
-            setActiveStep('payment');
-            return;
-          }
-
-          // For other payment methods, proceed with normal order placement
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          
-          // Create a unique order number - use numeric ID for database
-          const randomOrderNum = Math.floor(Math.random() * 1000000) + 1000;
-          const orderIdString = `ORD-${randomOrderNum}`;
-          setOrderNumber(orderIdString);
-          
-          // Get the user ID from localStorage
-          const storedUser = localStorage.getItem('user');
-          if (!storedUser) {
-            throw new Error("You must be logged in to place an order");
-          }
-          
-          const user = JSON.parse(storedUser);
-          if (!user || !user.id) {
-            throw new Error("Invalid user session. Please log in again.");
-          }
-          
-          // Format the shipping address
-          const shippingAddressData = {
-            address: shippingInfo.address,
-            city: shippingInfo.city,
-            state: shippingInfo.state,
-            postal_code: shippingInfo.postalCode,
-            country: shippingInfo.country
-          };
-          
-          // Insert order into the database
-          const { data: orderData, error: orderError } = await supabase
-            .from('orders')
-            .insert([
-              {
-                id: randomOrderNum, // Use the numeric ID for database
-                user_id: user.id,
-                order_number: orderIdString, // Store string version as order_number
-                status: 'Processing',
-                total_amount: total,
-                shipping_address: shippingAddressData,
-                payment_method: selectedPaymentMethod,
-                created_at: new Date().toISOString()
-              }
-            ])
-            .select()
-            .single();
-            
-          if (orderError) {
-            console.error("Error creating order:", orderError);
-            throw new Error("Failed to create order. Please try again.");
-          }
-          
-          console.log("Order created:", orderData);
-          
-          // Save each order item
           const orderItems = state.cart.map(item => {
             const product = cartProducts[item.product_id];
             const price = product.discount_percentage
               ? product.price * (1 - (product.discount_percentage / 100))
               : product.price;
             return {
-              order_id: randomOrderNum, // Use numeric ID here
+              id: getUserIdForDatabase(Math.floor(Math.random() * 1000000) + 1000), // Generate unique ID for each order item
+              order_id: getUserIdForDatabase(randomOrderNum), // Format ID as UUID
               product_id: item.product_id,
               quantity: item.quantity,
               price_per_unit: price,
@@ -566,89 +642,77 @@ const CheckoutPage: React.FC = () => {
             console.error("Error creating order items:", itemsError);
             // Don't throw here, as the order is already created
           }
-          
-          // Save shipping address if requested and user is authenticated
-          if (shippingInfo.saveAddress && isAuthenticated) {
-            try {
-              const { data: { user } } = await supabase.auth.getUser();
+        } catch (err) {
+          console.error("Error saving order items:", err);
+          // Not throwing here since the order was created successfully
+        }
+        
+        // Save shipping address if requested and user is authenticated
+        if (shippingInfo.saveAddress && isAuthenticated) {
+          try {
+            // Check if the address already exists
+            const { data: existingAddresses, error: checkError } = await supabase
+              .from('shipping_addresses')
+              .select('*')
+              .eq('user_id', databaseUserId) // Use UUID formatted ID
+              .eq('address', shippingInfo.address);
               
-              if (user) {
-                // Check if the address already exists
-                const { data: existingAddresses, error: checkError } = await supabase
-                  .from('shipping_addresses')
-                  .select('*')
-                  .eq('user_id', user.id)
-                  .eq('address', shippingInfo.address);
-                  
-                if (checkError) {
-                  console.error('Error checking existing addresses:', checkError);
-                } else if (!existingAddresses || existingAddresses.length === 0) {
-                  // Address doesn't exist, save it
-                  await supabase.from('shipping_addresses').insert([{
-                    user_id: user.id,
-                    first_name: shippingInfo.firstName,
-                    last_name: shippingInfo.lastName,
-                    address: shippingInfo.address,
-                    city: shippingInfo.city,
-                    state: shippingInfo.state,
-                    postal_code: shippingInfo.postalCode,
-                    country: shippingInfo.country,
-                    phone: shippingInfo.phone,
-                    is_default: addressState.addresses.length === 0, // Make default if first address
-                  }]);
-                }
+            if (checkError) {
+              console.error('Error checking existing addresses:', checkError);
+            } else if (!existingAddresses || existingAddresses.length === 0) {
+              // Address doesn't exist, save it
+              const addressData = {
+                user_id: databaseUserId, // Use UUID formatted ID
+                first_name: shippingInfo.firstName,
+                last_name: shippingInfo.lastName,
+                address: shippingInfo.address,
+                address_line2: shippingInfo.address_line2 || '',
+                city: shippingInfo.city,
+                state: shippingInfo.state,
+                postal_code: shippingInfo.postalCode,
+                country: shippingInfo.country,
+                phone: shippingInfo.phone,
+                email: shippingInfo.email,
+                is_default: addressState.addresses.length === 0, // Make default if first address
+              };
+              
+              const { error: insertError } = await supabase
+                .from('shipping_addresses')
+                .insert([addressData]);
+                
+              if (insertError) {
+                console.error('Error saving shipping address:', insertError);
+              } else {
+                console.log('Shipping address saved successfully');
               }
-            } catch (error) {
-              console.error('Error saving address:', error);
             }
+          } catch (error) {
+            console.error('Error saving address:', error);
+            // Not throwing error here, as this is non-critical
           }
-          
-          // Clear the cart only after successful order placement
-          clearCart();
-          
-          setOrderComplete(true);
-          window.scrollTo(0, 0);
-        } catch (err) {
-          console.error('Error placing order:', err);
-          setError(err instanceof Error ? err.message : 'Failed to process your order. Please try again.');
-        } finally {
-          setProcessingOrder(false);
         }
-      } else {
-        try {
-          if (selectedPaymentMethod === 'paystack') {
-            // For Paystack, we don't clear the cart here
-            // The cart will be cleared only after successful payment
-            setActiveStep('payment');
-            return;
-          }
-          
-          // For other payment methods, we would handle payment processing here
-          // But for now, we simply consider the order as complete
-          
-          setOrderComplete(true);
-          clearCart();
-          window.scrollTo(0, 0);
-        } catch (err) {
-          console.error('Error verifying payment:', err);
-          setPaymentError(err instanceof Error ? err.message : 'Failed to verify payment. Please contact support.');
-        } finally {
-          setProcessingOrder(false);
-        }
+        
+        // Mark order as complete and clear cart
+        setOrderTotal(total);
+        clearCart();
+        setOrderComplete(true);
+        window.scrollTo(0, 0);
+      } catch (parseError) {
+        console.error("Error parsing user data:", parseError);
+        throw new Error("Invalid user session. Please log in again.");
       }
     } catch (err) {
-      console.error('Error creating order:', err);
-      setError(err instanceof Error ? err.message : 'Failed to create order. Please try again.');
+      console.error('Error placing order:', err);
+      setError(err instanceof Error ? err.message : 'Failed to process your order. Please try again.');
     } finally {
       setProcessingOrder(false);
     }
   };
 
-  const handlePaystackSuccess = async (reference: string) => {
+  const handlePaystackSuccess = async (reference: string | any) => {
     setProcessingOrder(true);
     try {
-      // Here you would typically verify the payment with your backend
-      // For now, we'll simulate a successful verification
+      console.log("Payment successful with reference:", reference);
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Create a unique order number - use numeric ID for database
@@ -656,192 +720,196 @@ const CheckoutPage: React.FC = () => {
       const orderIdString = `ORD-${randomOrderNum}`;
       setOrderNumber(orderIdString);
       
-      // Get the user ID from localStorage
+      // Check if user is authenticated via localStorage
       const storedUser = localStorage.getItem('user');
+      console.log("Auth check: User in localStorage:", !!storedUser);
+      
       if (!storedUser) {
+        console.error("No user found in localStorage");
         throw new Error("You must be logged in to place an order");
       }
       
-      const user = JSON.parse(storedUser);
-      if (!user || !user.id) {
-        throw new Error("Invalid user session. Please log in again.");
-      }
-      
-      // Format the shipping address
-      const shippingAddressData = {
-        address: shippingInfo.address,
-        city: shippingInfo.city,
-        state: shippingInfo.state,
-        postal_code: shippingInfo.postalCode,
-        country: shippingInfo.country
-      };
-      
-      // Check if payment_reference column exists in orders table
+      // Parse the user data and get the user ID
       try {
-        // First, check if we can safely include payment_reference
-        const { error: checkError } = await supabase
-          .from('orders')
-          .select('id')
-          .limit(1);
-  
-        // Create the order data object
-        const orderDataObj = {
-          id: randomOrderNum, // Use numeric ID for database
-          user_id: user.id,
-          order_number: orderIdString, // Store string version as order_number
-          status: 'Processing',
-          total_amount: total,
-          shipping_address: shippingAddressData,
-          payment_method: 'Paystack',
-          created_at: new Date().toISOString()
+        const user = JSON.parse(storedUser);
+        if (!user || !user.id) {
+          console.error("Invalid user data in localStorage");
+          throw new Error("Invalid user session. Please log in again.");
+        }
+        
+        console.log("Processing order for user ID:", user.id);
+        
+        // Get UUID formatted user ID for database
+        const databaseUserId = getUserIdForDatabase(user.id);
+        console.log("Using formatted user ID for database:", databaseUserId);
+        
+        // Format the shipping address
+        const shippingAddressData = {
+          address: shippingInfo.address,
+          address_line2: shippingInfo.address_line2,
+          city: shippingInfo.city,
+          state: shippingInfo.state,
+          postal_code: shippingInfo.postalCode,
+          country: shippingInfo.country
         };
-  
-        // If no error during select, try to add payment_reference
-        if (!checkError) {
+        
+        // Process the order
+        try {
+          // Get cart totals for the order
+          const { total } = calculateCartTotals();
+          
+          // Create the order data object
+          const orderDataObj = {
+            id: getUserIdForDatabase(randomOrderNum), // Format order ID as UUID
+            user_id: databaseUserId, // Use UUID formatted ID
+            order_number: orderIdString, // Store string version as order_number
+            status: 'Processing',
+            total_amount: total,
+            shipping_address: shippingAddressData,
+            payment_method: 'Paystack',
+            created_at: new Date().toISOString()
+          };
+          
+          // Extract reference string if it's an object
+          let paymentReference = reference;
+          if (typeof reference === 'object' && reference !== null && 'reference' in reference) {
+            paymentReference = (reference as any).reference;
+            console.log("Extracted reference string from object:", paymentReference);
+          }
+          
+          // Format the payment reference as UUID if needed
+          const formattedPaymentReference = getUserIdForDatabase(paymentReference);
+          console.log("Formatted payment reference for database:", formattedPaymentReference);
+          
+          // Attempt to create the order directly with payment reference as a string
           try {
-            // Try to include payment_reference in a safe way
-            // Insert order into the database with payment_reference
-            const { data: orderWithRef, error: orderWithRefError } = await supabase
+            console.log("Creating order with payment reference:", formattedPaymentReference);
+            const { data: orderData, error: orderCreateError } = await supabase
               .from('orders')
               .insert([{
                 ...orderDataObj,
-                payment_reference: reference
+                payment_reference: formattedPaymentReference
               }])
               .select()
               .single();
               
-            if (!orderWithRefError) {
-              console.log("Order created with payment reference:", orderWithRef);
-            } else if (orderWithRefError.code === 'PGRST204') {
-              // Column doesn't exist, insert without it
-              const { data: orderNoRef, error: orderNoRefError } = await supabase
+            if (orderCreateError) {
+              // If there's an error with payment_reference, try without it
+              console.error("Error creating order with payment reference:", orderCreateError);
+              console.log("Trying to create order without payment reference");
+              
+              const { data: orderWithoutRef, error: orderWithoutRefError } = await supabase
                 .from('orders')
                 .insert([orderDataObj])
                 .select()
                 .single();
                 
-              if (orderNoRefError) {
-                throw orderNoRefError;
+              if (orderWithoutRefError) {
+                throw orderWithoutRefError;
               }
-              console.log("Order created without payment reference:", orderNoRef);
+              
+              console.log("Order created without payment reference:", orderWithoutRef);
             } else {
-              throw orderWithRefError;
+              console.log("Order created successfully with payment reference:", orderData);
+            }
+          } catch (insertError) {
+            console.error("Failed to create order:", insertError);
+            throw new Error("Failed to create order. Please try again.");
+          }
+          
+          // Save payment reference separately (for debugging/tracking)
+          console.log("Paystack payment reference:", paymentReference);
+          console.log("Formatted payment reference:", formattedPaymentReference);
+          
+          // Save each order item
+          try {
+            const orderItems = state.cart.map(item => {
+              const product = cartProducts[item.product_id];
+              const price = product.discount_percentage
+                ? product.price * (1 - (product.discount_percentage / 100))
+                : product.price;
+              return {
+                id: getUserIdForDatabase(Math.floor(Math.random() * 1000000) + 1000), // Generate unique ID for each order item
+                order_id: getUserIdForDatabase(randomOrderNum), // Format ID as UUID
+                product_id: item.product_id,
+                quantity: item.quantity,
+                price_per_unit: price,
+                subtotal: price * item.quantity
+              };
+            });
+            
+            const { error: itemsError } = await supabase
+              .from('order_items')
+              .insert(orderItems);
+              
+            if (itemsError) {
+              console.error("Error creating order items:", itemsError);
+              // Don't throw here, as the order is already created
             }
           } catch (err) {
-            // Fall back to inserting without payment_reference
-            console.error("Error inserting order with reference, trying without:", err);
-            const { data: _orderResult, error: orderError } = await supabase
-              .from('orders')
-              .insert([orderDataObj])
-              .select()
-              .single();
-              
-            if (orderError) throw orderError;
+            console.error("Error saving order items:", err);
+            // Not throwing here since the order was created successfully
           }
-        } else {
-          // Insert order into the database without payment_reference
-          const { data: _orderResult, error: orderError } = await supabase
-            .from('orders')
-            .insert([orderDataObj])
-            .select()
-            .single();
-            
-          if (orderError) throw orderError;
-          console.log("Order created:", _orderResult);
-        }
-      } catch (err) {
-        console.error("Error creating order:", err);
-        throw new Error("Failed to create order. Please try again.");
-      }
-      
-      // Save payment reference separately (for debugging/tracking)
-      console.log("Paystack payment reference:", reference);
-      
-      // Try to save payment reference to user_metadata 
-      try {
-        await supabase.auth.updateUser({
-          data: { 
-            last_payment_reference: reference,
-            last_order_id: randomOrderNum,
-            last_order_number: orderIdString
-          }
-        });
-      } catch (err) {
-        // Non-critical error, just log it
-        console.error("Could not save payment reference to user metadata:", err);
-      }
-      
-      // Save each order item
-      try {
-        const orderItems = state.cart.map(item => {
-          const product = cartProducts[item.product_id];
-          const price = product.discount_percentage
-            ? product.price * (1 - (product.discount_percentage / 100))
-            : product.price;
-          return {
-            order_id: randomOrderNum, // Use numeric ID here
-            product_id: item.product_id,
-            quantity: item.quantity,
-            price_per_unit: price,
-            subtotal: price * item.quantity
-          };
-        });
-        
-        const { error: itemsError } = await supabase
-          .from('order_items')
-          .insert(orderItems);
           
-        if (itemsError) {
-          console.error("Error creating order items:", itemsError);
-          // Don't throw here, as the order is already created
-        }
-      } catch (err) {
-        console.error("Error saving order items:", err);
-        // Not throwing here since the order was created successfully
-      }
-      
-      // Save shipping address if requested and user is authenticated
-      if (shippingInfo.saveAddress && isAuthenticated) {
-        try {
-          const { data: { user } } = await supabase.auth.getUser();
-          
-          if (user) {
-            // Check if the address already exists
-            const { data: existingAddresses, error: checkError } = await supabase
-              .from('shipping_addresses')
-              .select('*')
-              .eq('user_id', user.id)
-              .eq('address', shippingInfo.address);
-              
-            if (checkError) {
-              console.error('Error checking existing addresses:', checkError);
-            } else if (!existingAddresses || existingAddresses.length === 0) {
-              // Address doesn't exist, save it
-              await supabase.from('shipping_addresses').insert([{
-                user_id: user.id,
-                first_name: shippingInfo.firstName,
-                last_name: shippingInfo.lastName,
-                address: shippingInfo.address,
-                city: shippingInfo.city,
-                state: shippingInfo.state,
-                postal_code: shippingInfo.postalCode,
-                country: shippingInfo.country,
-                phone: shippingInfo.phone,
-                is_default: addressState.addresses.length === 0, // Make default if first address
-              }]);
+          // Save shipping address if requested and user is authenticated
+          if (shippingInfo.saveAddress && isAuthenticated) {
+            try {
+              // Check if the address already exists
+              const { data: existingAddresses, error: checkError } = await supabase
+                .from('shipping_addresses')
+                .select('*')
+                .eq('user_id', databaseUserId) // Use UUID formatted ID
+                .eq('address', shippingInfo.address);
+                
+              if (checkError) {
+                console.error('Error checking existing addresses:', checkError);
+              } else if (!existingAddresses || existingAddresses.length === 0) {
+                // Address doesn't exist, save it
+                const addressData = {
+                  user_id: databaseUserId, // Use UUID formatted ID
+                  first_name: shippingInfo.firstName,
+                  last_name: shippingInfo.lastName,
+                  address: shippingInfo.address,
+                  address_line2: shippingInfo.address_line2 || '',
+                  city: shippingInfo.city,
+                  state: shippingInfo.state,
+                  postal_code: shippingInfo.postalCode,
+                  country: shippingInfo.country,
+                  phone: shippingInfo.phone,
+                  email: shippingInfo.email,
+                  is_default: addressState.addresses.length === 0, // Make default if first address
+                };
+                
+                const { error: insertError } = await supabase
+                  .from('shipping_addresses')
+                  .insert([addressData]);
+                  
+                if (insertError) {
+                  console.error('Error saving shipping address:', insertError);
+                } else {
+                  console.log('Shipping address saved successfully');
+                }
+              }
+            } catch (error) {
+              console.error('Error saving address:', error);
+              // Not throwing error here, as this is non-critical
             }
           }
-        } catch (error) {
-          console.error('Error saving address:', error);
-          // Not throwing error here, as this is non-critical
+          
+          // Clear the cart only after successful payment verification
+          setOrderTotal(total);
+          clearCart();
+          
+          setOrderComplete(true);
+          window.scrollTo(0, 0);
+        } catch (err) {
+          console.error("Error processing order:", err);
+          throw new Error("Failed to complete your order. Please try again.");
         }
+      } catch (parseError) {
+        console.error("Error parsing user data:", parseError);
+        throw new Error("Invalid user session. Please log in again.");
       }
-      
-      // Clear the cart only after successful payment verification
-      clearCart();
-      
-      setOrderComplete(true);
-      window.scrollTo(0, 0);
     } catch (err) {
       console.error('Error verifying payment:', err);
       setPaymentError(err instanceof Error ? err.message : 'Failed to verify payment. Please contact support.');
@@ -849,11 +917,6 @@ const CheckoutPage: React.FC = () => {
       setProcessingOrder(false);
     }
   };
-
-  // const _handlePaystackError = (error: any) => {
-  //   console.error('Paystack payment error:', error);
-  //   setPaymentError(error.message || 'Payment failed. Please try again.');
-  // };
 
   // Go back to previous step
   const handleGoBack = () => {
@@ -928,7 +991,7 @@ const CheckoutPage: React.FC = () => {
               <span className="font-medium">Order Number:</span> {orderNumber}
             </p>
             <p className="mt-2 text-gray-700 dark:text-gray-300">
-              <span className="font-medium">Order Total:</span>₵{total.toFixed(2)}
+              <span className="font-medium">Order Total:</span>₵{orderTotal !== null ? orderTotal.toFixed(2) : '0.00'}
             </p>
             <p className="mt-2 text-gray-700 dark:text-gray-300">
               <span className="font-medium">Shipping Address:</span> {shippingInfo.address}, {shippingInfo.city}, {shippingInfo.state} {shippingInfo.postalCode}
@@ -1038,6 +1101,19 @@ const CheckoutPage: React.FC = () => {
                 </div>
                 
                 <div className="px-6 py-5 space-y-6">
+                  {/* Notice for pre-filled information for logged-in users */}
+                  {isAuthenticated && (
+                    <div className="mb-4 bg-blue-50 dark:bg-blue-900/20 p-4 rounded-md flex items-start">
+                      <User className="h-5 w-5 text-blue-400 mt-0.5 mr-3 flex-shrink-0" />
+                      <div>
+                        <h4 className="text-sm font-medium text-blue-800 dark:text-blue-300">Your Information</h4>
+                        <p className="mt-1 text-sm text-blue-700 dark:text-blue-400">
+                          We've pre-filled your information from your account. You can change it below if needed.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                
                   {/* Shipping Address Manager for authenticated users */}
                   {isAuthenticated && (
                     <div className="mb-6">
@@ -1046,7 +1122,7 @@ const CheckoutPage: React.FC = () => {
                         initialAddress={{
                           first_name: shippingInfo.firstName,
                           last_name: shippingInfo.lastName,
-                          address_line1: shippingInfo.address,
+                          address: shippingInfo.address,
                           city: shippingInfo.city,
                           state: shippingInfo.state,
                           postal_code: shippingInfo.postalCode,
@@ -1156,7 +1232,7 @@ const CheckoutPage: React.FC = () => {
                               )}
                             </div>
                             
-                            <div>
+                            <div className="col-span-6">
                               <label htmlFor="address" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                 Street Address*
                               </label>
@@ -1262,19 +1338,42 @@ const CheckoutPage: React.FC = () => {
                             </div>
                           </div>
                           
-                          <div className="flex items-center mt-4">
-                            <input
-                              id="saveAddress"
-                              name="saveAddress"
-                              type="checkbox"
-                              checked={shippingInfo.saveAddress}
-                              onChange={handleShippingChange}
-                              className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 dark:border-gray-600 rounded"
-                            />
-                            <label htmlFor="saveAddress" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
-                              Save this address for future orders
-                            </label>
-                          </div>
+                          {/* Save address checkbox - updated wording for authenticated users */}
+                          {isAuthenticated ? (
+                            <div className="flex items-center my-6">
+                              <input
+                                id="saveAddress"
+                                name="saveAddress"
+                                type="checkbox"
+                                checked={shippingInfo.saveAddress}
+                                onChange={handleShippingChange}
+                                className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 dark:border-gray-600 rounded"
+                              />
+                              <label htmlFor="saveAddress" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+                                Save this as a new shipping address in your account
+                              </label>
+                            </div>
+                          ) : (
+                            <div className="flex items-center my-6">
+                              <input
+                                id="saveAddress"
+                                name="saveAddress"
+                                type="checkbox"
+                                checked={shippingInfo.saveAddress}
+                                onChange={handleShippingChange}
+                                className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 dark:border-gray-600 rounded"
+                                disabled={!isAuthenticated}
+                              />
+                              <label htmlFor="saveAddress" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+                                <span>
+                                  Create an account to save shipping information.{' '}
+                                  <Link to="/register?redirect=checkout" className="text-green-600 dark:text-green-400 hover:underline">
+                                    Sign up here
+                                  </Link>
+                                </span>
+                              </label>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -1283,6 +1382,21 @@ const CheckoutPage: React.FC = () => {
                   {/* Manual form for guest users */}
                   {!isAuthenticated && (
                     <>
+                      {/* Guest user notice */}
+                      <div className="mb-6 bg-gray-50 dark:bg-gray-700 p-4 rounded-md flex items-start">
+                        <AlertCircle className="h-5 w-5 text-gray-400 mt-0.5 mr-3 flex-shrink-0" />
+                        <div>
+                          <h4 className="text-sm font-medium text-gray-800 dark:text-gray-200">Checking out as a guest</h4>
+                          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                            <Link to="/login" className="text-green-600 dark:text-green-400 hover:text-green-500 dark:hover:text-green-300">
+                              Sign in
+                            </Link> or <Link to="/register" className="text-green-600 dark:text-green-400 hover:text-green-500 dark:hover:text-green-300">
+                              create an account
+                            </Link> to speed up checkout and save your shipping details for next time.
+                          </p>
+                        </div>
+                      </div>
+                      
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         <div>
                           <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -1369,7 +1483,7 @@ const CheckoutPage: React.FC = () => {
                         </div>
                       </div>
                       
-                      <div>
+                      <div className="col-span-6">
                         <label htmlFor="address" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                           Street Address*
                         </label>
@@ -1484,7 +1598,16 @@ const CheckoutPage: React.FC = () => {
                           className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 dark:border-gray-600 rounded"
                         />
                         <label htmlFor="saveAddress" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
-                          {isAuthenticated ? 'Save this address for future orders' : 'Create an account to save this address'}
+                          {isAuthenticated ? (
+                            'Save this shipping address for future orders'
+                          ) : (
+                            <span>
+                              Create an account to save shipping information.{' '}
+                              <Link to="/register?redirect=checkout" className="text-green-600 dark:text-green-400 hover:underline">
+                                Sign up here
+                              </Link>
+                            </span>
+                          )}
                         </label>
                       </div>
                     </>

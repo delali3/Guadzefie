@@ -26,3 +26,9 @@ export {
 
 // Export farm settings table migration
 // export * from './farm_settings_table'; 
+
+// Export additional_images column migration
+export * from './add_additional_images';
+
+// Export is_available column migration
+export * from './add_is_available'; 

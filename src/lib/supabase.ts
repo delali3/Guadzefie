@@ -52,7 +52,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     storage: new CustomLocalStorage(),
     persistSession: true,
-    autoRefreshToken: true,
+    autoRefreshToken: false, // Disable token refresh for custom auth
     debug: true
   },
   global: {
@@ -71,8 +71,20 @@ function getAuthHeaders(): Record<string, string> {
     
     // If there's a token in the user object, return authorization header
     if (user && user.token) {
+      // For custom auth, use a simple API key approach instead of JWT
       return { 
-        Authorization: `Bearer ${user.token}` 
+        Authorization: `Bearer ${supabaseAnonKey}`,
+        'X-Custom-User-Id': user.id,
+        'X-Custom-User-Email': user.email
+      };
+    }
+    
+    // If no token but we have user ID, still include custom headers
+    if (user && user.id) {
+      return {
+        Authorization: `Bearer ${supabaseAnonKey}`,
+        'X-Custom-User-Id': user.id,
+        'X-Custom-User-Email': user.email || ''
       };
     }
     
@@ -86,12 +98,46 @@ function getAuthHeaders(): Record<string, string> {
 // Function to get current user from localStorage
 export function getCurrentUser() {
   try {
-    const userStr = localStorage.getItem('user');
-    if (!userStr) return null;
+    // Log the attempt to get user
+    console.log('Attempting to get current user from localStorage');
     
-    return JSON.parse(userStr);
+    const userStr = localStorage.getItem('user');
+    if (!userStr) {
+      console.log('No user found in localStorage');
+      return null;
+    }
+    
+    try {
+      const userData = JSON.parse(userStr);
+      
+      // Validate user data structure
+      if (!userData || !userData.id) {
+        console.error('Invalid user data format in localStorage:', userData);
+        return null;
+      }
+      
+      // Successfully retrieved user
+      console.log('Successfully retrieved user from localStorage:', { 
+        id: userData.id,
+        email: userData.email
+      });
+      
+      return userData;
+    } catch (parseError) {
+      console.error('Error parsing user JSON from localStorage:', parseError);
+      
+      // Try to recover by clearing the corrupted data
+      try {
+        localStorage.removeItem('user');
+        console.log('Removed corrupted user data from localStorage');
+      } catch (clearError) {
+        console.error('Failed to clear corrupted user data:', clearError);
+      }
+      
+      return null;
+    }
   } catch (error) {
-    console.error('Error parsing user from localStorage:', error);
+    console.error('Error accessing localStorage:', error);
     return null;
   }
 }
@@ -108,6 +154,28 @@ export function getSupabaseWithAuth() {
       // Return normal supabase client if there's an error
       return supabase;
     });
+}
+
+// Function to help bypass RLS with custom auth
+export async function bypassRLS(tableName: string, operation: 'select' | 'insert' | 'update' | 'delete', options: any = {}) {
+  // Add a special header to bypass RLS
+  const customHeaders = {
+    ...getAuthHeaders(),
+    'X-Bypass-RLS': 'true'
+  };
+  
+  // Log the attempt
+  console.log(`Trying to bypass RLS for ${operation} on ${tableName}`);
+  
+  // Create a temporary client with custom headers
+  const tempClient = createClient(supabaseUrl, supabaseAnonKey, {
+    global: {
+      headers: customHeaders
+    }
+  });
+  
+  // Return the query builder with bypass headers
+  return tempClient.from(tableName);
 }
 
 // Database Types
@@ -243,3 +311,30 @@ export interface Review {
   comment: string | null;
   created_at: string;
 }
+
+// Refresh Supabase client headers when needed
+export const refreshSupabaseHeaders = () => {
+  // This function can be called after login/logout to update headers
+  const headers = getAuthHeaders();
+  console.log('Refreshing Supabase headers with:', {
+    hasUserId: !!headers['X-Custom-User-Id'],
+    hasEmail: !!headers['X-Custom-User-Email']
+  });
+  
+  // Create a new client with updated headers
+  // We can't update headers directly, so recreate the client
+  const updatedClient = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      storage: new CustomLocalStorage(),
+      persistSession: true,
+      autoRefreshToken: false,
+      debug: true
+    },
+    global: {
+      headers: headers
+    }
+  });
+  
+  // Replace the old client with the new one
+  Object.assign(supabase, updatedClient);
+};

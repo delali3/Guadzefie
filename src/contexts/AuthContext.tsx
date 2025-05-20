@@ -59,14 +59,20 @@ const getCustomUser = (): any | null => {
 
 // Create a fake Supabase session from a custom user
 const createFakeSessionFromCustomUser = (customUser: any): Session | null => {
-  if (!customUser || !customUser.id) return null;
+  if (!customUser || !customUser.id) {
+    console.error('Cannot create fake session: Invalid user data', customUser);
+    return null;
+  }
+  
+  console.log('Creating fake session for user:', customUser.id);
   
   // Create a JWT-like token structure for RLS policies
   // This won't pass cryptographic verification but will be stored locally
-  const fakeToken = btoa(JSON.stringify({
+  const fakeToken = customUser.token || btoa(JSON.stringify({
     sub: customUser.id, // This is used by RLS policies to match auth.uid()
     email: customUser.email,
-    role: 'authenticated'
+    role: 'authenticated',
+    exp: Math.floor(Date.now() / 1000) + 86400 // 24 hours from now
   }));
   
   const now = Math.floor(Date.now() / 1000);
@@ -86,6 +92,7 @@ const createFakeSessionFromCustomUser = (customUser: any): Session | null => {
         first_name: customUser.first_name,
         last_name: customUser.last_name,
         is_farm: customUser.is_farm,
+        is_admin: customUser.is_admin || false,
         full_name: `${customUser.first_name || ''} ${customUser.last_name || ''}`.trim()
       },
       aud: 'authenticated',
@@ -93,13 +100,29 @@ const createFakeSessionFromCustomUser = (customUser: any): Session | null => {
     }
   };
   
-  // Store the fake session in the same format as Supabase would
+  // Store tokens in various formats for maximum compatibility
   try {
+    // The main Supabase auth token format
     localStorage.setItem('sb-itbuxujsotcgexofbrwq-auth-token', JSON.stringify({
       currentSession: fakeSession,
       expiresAt: tomorrow * 1000 // milliseconds
     }));
-    console.log('Stored fake auth session for custom user');
+    
+    // Fallback formats
+    localStorage.setItem('supabase.auth.token', JSON.stringify({
+      currentSession: fakeSession,
+      expiresAt: tomorrow * 1000 // milliseconds
+    }));
+    
+    // Also store directly in the auth global storage key
+    // This might be redundant but ensures maximum compatibility
+    const authKey = `sb-${import.meta.env.VITE_SUPABASE_PROJECT_ID || 'itbuxujsotcgexofbrwq'}-auth-token`;
+    localStorage.setItem(authKey, JSON.stringify({
+      currentSession: fakeSession,
+      expiresAt: tomorrow * 1000
+    }));
+    
+    console.log('Stored fake auth session for custom user in multiple formats');
   } catch (e) {
     console.error('Failed to store fake session:', e);
   }

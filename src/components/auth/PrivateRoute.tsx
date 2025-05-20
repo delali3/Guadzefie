@@ -12,18 +12,47 @@ const getCurrentUser = () => {
     console.log("PrivateRoute - checking localStorage for user:", !!userStr);
     
     if (!userStr) {
+      // Try to check if there's a Supabase session we can use to recover
+      try {
+        const supabaseAuthKey = 'sb-itbuxujsotcgexofbrwq-auth-token';
+        const authStr = localStorage.getItem(supabaseAuthKey);
+        
+        if (authStr) {
+          console.log("PrivateRoute - found Supabase auth token but no user data");
+          return null; // We have a token but no user data, need to get user data from API
+        }
+      } catch (authError) {
+        console.error("Error checking Supabase auth token:", authError);
+      }
+      
       return null;
     }
     
-    const user = JSON.parse(userStr);
-    console.log("PrivateRoute - user found:", {
-      id: user.id,
-      email: user.email,
-      is_farm: user.is_farm,
-      is_admin: user.is_admin
-    });
-    
-    return user;
+    try {
+      const user = JSON.parse(userStr);
+      
+      // Validate the user object has minimal required fields
+      if (!user || !user.id || !user.email) {
+        console.error("PrivateRoute - invalid user data format:", user);
+        // Clear invalid data
+        localStorage.removeItem('user');
+        return null;
+      }
+      
+      console.log("PrivateRoute - user found:", {
+        id: user.id,
+        email: user.email,
+        is_farm: user.is_farm,
+        is_admin: user.is_admin
+      });
+      
+      return user;
+    } catch (parseError) {
+      console.error("PrivateRoute - error parsing user JSON:", parseError);
+      // Clear corrupted data
+      localStorage.removeItem('user');
+      return null;
+    }
   } catch (error) {
     console.error("PrivateRoute - error getting user from localStorage:", error);
     return null;

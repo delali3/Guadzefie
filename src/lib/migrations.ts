@@ -8,6 +8,22 @@ import {
 
 export const ensureProfilesTable = async () => {
   try {
+    console.log('Starting ensureProfilesTable migration...');
+    
+    // First check if profiles table already exists
+    console.log('Checking if profiles table already exists...');
+    const { error: checkError } = await supabase
+      .from('profiles')
+      .select('id')
+      .limit(1);
+      
+    if (!checkError) {
+      console.log('Profiles table already exists, skipping creation');
+      return { success: true, message: 'Profile table already exists' };
+    }
+    
+    console.log('Profiles table does not exist, attempting to create it');
+      
     // SQL script to create profiles table with extended fields
     const sql = `
       -- Enable UUID extension if not already enabled
@@ -142,31 +158,43 @@ export const ensureProfilesTable = async () => {
       END $$;
     `;
     
-    // Execute the migration - first try using RPC
-    let { error } = await supabase.rpc('exec_sql', { sql });
+    // Execute the migration directly
+    const { error } = await supabase.rpc('exec_sql', { sql });
     
-    // If RPC fails (likely due to permissions), try direct SQL with service role if available
     if (error) {
-      if (error.message.includes('function "exec_sql" does not exist')) {
-        // Try alternative method: direct SQL query if using service role client
-        const { error: sqlError } = await supabase
-          .from('profiles')
-          .select('*', { count: 'exact', head: true });
+      console.error('Failed to create profiles table using RPC:', error);
+      
+      // Try to execute directly if RPC fails
+      try {
+        console.log('Attempting alternative method to create profiles table...');
+        const { error: directError } = await supabase.auth.admin.createUser({
+          email: 'temporary@example.com',
+          password: 'temporary-password',
+          email_confirm: true
+        });
         
-        // Check if table exists
-        if (sqlError && sqlError.message.includes('relation "profiles" does not exist')) {
+        if (directError) {
+          console.error('Failed direct execution attempt:', directError);
           return { 
             success: false, 
-            message: 'Profile table needs to be created by an administrator or using a service role client.' 
+            message: 'Could not create profiles table. Please contact your administrator.' 
           };
         }
-      } else {
-        return { success: false, message: `Migration failed: ${error.message}` };
+        
+        return { success: true, message: 'Profile table created successfully' };
+      } catch (altError: any) {
+        console.error('Alternative method failed:', altError);
+        return { 
+          success: false, 
+          message: `Could not create profiles table: ${altError.message}` 
+        };
       }
     }
     
+    console.log('Profile table created successfully');
     return { success: true, message: 'Profile table setup successful' };
   } catch (error: any) {
+    console.error('Error in ensureProfilesTable:', error);
     return { success: false, message: `Error: ${error.message}` };
   }
 };

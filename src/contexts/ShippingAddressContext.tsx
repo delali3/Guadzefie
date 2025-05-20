@@ -1,6 +1,6 @@
 // src/contexts/ShippingAddressContext.tsx
 import React, { createContext, useContext, useReducer, useEffect, useCallback, useState } from 'react';
-import { supabase, getCurrentUser } from '../lib/supabase';
+import { supabase, getCurrentUser, bypassRLS } from '../lib/supabase';
 import { ensureShippingAddressesTable, checkShippingAddressesTable } from '../lib/migrations';
 import toast from 'react-hot-toast';
 
@@ -10,7 +10,8 @@ export interface ShippingAddress {
   user_id: string;
   first_name: string;
   last_name: string;
-  address_line1: string;  // Updated field name to match our table
+  address: string;  // Changed from address_line1 to address
+  address_line1?: string; // Keep for backward compatibility
   address_line2?: string; // Added as optional
   city: string;
   state: string;
@@ -26,7 +27,8 @@ export interface ShippingAddress {
 export interface NewShippingAddress {
   first_name: string;
   last_name: string;
-  address_line1: string;  // Updated field name
+  address: string;  // Changed from address_line1 to address
+  address_line1?: string; // Keep for backward compatibility
   address_line2?: string; // Optional
   city: string;
   state: string;
@@ -264,7 +266,40 @@ export const ShippingAddressProvider: React.FC<{ children: React.ReactNode }> = 
       
       console.log('Fetching addresses for user:', currentUser.id);
       
-      // Fetch addresses from the database
+      // Try using the bypass RLS function for custom auth
+      try {
+        // Fetch addresses using the bypassRLS function for custom auth
+        const addressesQuery = await bypassRLS('shipping_addresses', 'select');
+        const { data: bypassData, error: bypassError } = await addressesQuery
+          .select('*')
+          .eq('user_id', currentUser.id)
+          .order('created_at', { ascending: false });
+        
+        if (bypassError) {
+          throw bypassError;
+        }
+        
+        if (bypassData) {
+          console.log('Successfully fetched addresses using bypassRLS:', bypassData.length);
+          dispatch({ type: 'SET_ADDRESSES', payload: bypassData || [] });
+          
+          // If we have addresses, select the default one or the first one
+          if (bypassData.length > 0) {
+            const defaultAddress = bypassData.find(addr => addr.is_default);
+            if (defaultAddress) {
+              dispatch({ type: 'SELECT_ADDRESS', payload: defaultAddress.id });
+            } else {
+              dispatch({ type: 'SELECT_ADDRESS', payload: bypassData[0].id });
+            }
+          }
+          return;
+        }
+      } catch (bypassError) {
+        console.error('Error using bypassRLS for shipping addresses:', bypassError);
+        // Continue with regular query if bypass fails
+      }
+      
+      // Fall back to regular query as before
       const { data, error } = await supabase
         .from('shipping_addresses')
         .select('*')

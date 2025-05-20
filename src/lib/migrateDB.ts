@@ -11,11 +11,13 @@ import {
   // ensureProductsQuantityField,
   // checkFarmSettingsTable,
   // ensureFarmSettingsTable
+  // ensureAdditionalImagesColumn,
+  // ensureIsAvailableColumn
 } from './migrations/index';
 
 export const migrateDatabase = async () => {
   console.log('Checking database tables...');
-  // const results = [];
+  const results = [];
   
   // Check and create profiles table if needed
   // const profileTableExists = await checkProfileTable();
@@ -77,9 +79,19 @@ export const migrateDatabase = async () => {
   //   console.log('Farm settings table already exists');
   // }
   
-  // // Add other table checks and creations here as needed
+  // Add or update the additional_images column in products table
+  // console.log('Ensuring products table has additional_images column...');
+  // const additionalImagesResult = await ensureAdditionalImagesColumn();
+  // results.push(additionalImagesResult);
   
-  // // Check for any failures
+  // // Add or update the is_available column in products table
+  // console.log('Ensuring products table has is_available column...');
+  // const isAvailableResult = await ensureIsAvailableColumn();
+  // results.push(isAvailableResult);
+  
+  // Add other table checks and creations here as needed
+  
+  // Check for any failures
   // const failures = results.filter(r => !r.success);
   
   // if (failures.length > 0) {

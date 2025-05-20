@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { supabase, getCurrentUser } from '../../lib/supabase';
-import { checkProfileTable, ensureProfilesTable as setupProfilesTable } from '../../lib/migrations';
+import { supabase } from '../../lib/supabase';
 import SEO from '../../components/SEO';
 import { 
   ChevronRight, 
@@ -145,180 +144,320 @@ const ProfilePage: React.FC = () => {
     message?: string;
   }>({ show: false });
 
-  // Use a function to handle migration status
-  // const handleMigrationComplete = (success: boolean, message: string) => {
-  //   setMigrationStatus({
-  //     show: true,
-  //     success,
-  //     message
-  //   });
-    
-  //   if (success) {
-  //     toast.success(message);
-  //   } else {
-  //     toast.error(message);
-  //   }
-    
-  //   // Hide the message after 5 seconds
-  //   setTimeout(() => {
-  //     setMigrationStatus(prev => ({ ...prev, show: false }));
-  //   }, 5000);
-  // };
-
   // Load user from localStorage on mount
   useEffect(() => {
-    const loadedUser = getCurrentUser();
-    if (loadedUser) {
-      console.log('User loaded from localStorage:', loadedUser);
-      setUser(loadedUser);
+    try {
+      // Reset component state when mounted
+      setLoading(true);
+      setProfileData({
+        first_name: '',
+        last_name: '',
+        phone: '',
+        avatar_url: null,
+        bio: '',
+        birth_date: '',
+        gender: '',
+        occupation: '',
+        address: {
+          street: '',
+          city: '',
+          state: '',
+          postal_code: '',
+          country: ''
+        },
+        website: '',
+        social_links: {
+          facebook: '',
+          twitter: '',
+          instagram: '',
+          linkedin: ''
+        },
+        privacy_level: 'private'
+      });
       
-      // Run the profiles table migration to fix any schema issues
-      setupProfilesTable()
-        .then(result => {
-          console.log('Profiles table migration result:', result);
-          // Only fetch profile if the migration succeeded or the table already exists
-          fetchProfile();
-        })
-        .catch(err => {
-          console.error('Error running profiles migration:', err);
-          setError('Error preparing the database. Please try again later.');
+      // Directly retrieve user from localStorage for custom auth
+      const userStr = localStorage.getItem('user');
+      console.log('Raw user data from localStorage:', userStr ? `found (length: ${userStr.length})` : 'not found');
+      
+      if (userStr) {
+        try {
+          const loadedUser = JSON.parse(userStr);
+          console.log('Parsed user data:', loadedUser);
+          console.log('Parsed user data structure:', Object.keys(loadedUser));
+          
+          if (loadedUser && loadedUser.id) {
+            console.log('Valid user found with ID:', loadedUser.id);
+            
+            // Set user immediately
+            setUser(loadedUser);
+            
+            // Then fetch profile data - this will happen in the user effect dependency
+            console.log('User set to state, profile data will be fetched next');
+          } else {
+            console.error('Invalid user data format - missing ID:', loadedUser);
+            setError("User data format is invalid. Please sign in again.");
+            setLoading(false);
+            
+            // Redirect to login page after a short delay
+            const timer = setTimeout(() => {
+              console.log('Invalid user data, redirecting to login page');
+              window.location.href = '/login';
+            }, 2000);
+            
+            return () => clearTimeout(timer);
+          }
+        } catch (parseError) {
+          console.error('Failed to parse user data:', parseError);
+          setError("Failed to read user data. Please sign in again.");
           setLoading(false);
-        });
-    } else {
-      setError("User not authenticated. Please sign in.");
+          
+          // Redirect to login page after a short delay
+          const timer = setTimeout(() => {
+            console.log('Error parsing user, redirecting to login page');
+            window.location.href = '/login';
+          }, 2000);
+          
+          return () => clearTimeout(timer);
+        }
+      } else {
+        setError("User not authenticated. Please sign in.");
+        setLoading(false);
+        
+        // Redirect to login page after a short delay
+        const timer = setTimeout(() => {
+          console.log('No user found, redirecting to login page');
+          window.location.href = '/login';
+        }, 2000);
+        
+        return () => clearTimeout(timer);
+      }
+    } catch (error) {
+      console.error('Error loading user from localStorage:', error);
+      setError("Error loading user data. Please sign in again.");
       setLoading(false);
+      
+      // Redirect to login page after a short delay
+      const timer = setTimeout(() => {
+        console.log('Error loading user, redirecting to login page');
+        window.location.href = '/login';
+      }, 2000);
+      
+      return () => clearTimeout(timer);
     }
   }, []);
 
+  useEffect(() => {
+    if (user && user.id) {
+      console.log('User state is set, now fetching profile with ID:', user.id);
+      
+      // Only fetch if we're still loading (haven't fetched yet)
+      if (loading) {
+        fetchProfile();
+      }
+    } else {
+      console.log('Waiting for user to be set before fetching profile...');
+    }
+  }, [user, loading]);
+
   const fetchProfile = async () => {
-    if (!user) {
+    if (!user || !user.id) {
+      console.error('fetchProfile called but user or user.id is missing:', user);
       setLoading(false);
       setError("User not authenticated. Please sign in again.");
       return;
     }
 
     try {
-      console.log('Fetching profile for user:', user);
-      
-      // Check if the profiles table exists
-      const tableExists = await checkProfileTable();
-      
-      if (!tableExists) {
-        setNeedsProfileTable(true);
-        setLoading(false);
-        return;
-      }
-      
-      // First check profiles table
-      const { data, error } = await supabase
-        .from('profiles')
+      console.log('Fetching profile for user ID:', user.id);
+            
+      // First try to get data directly from users table since that's our primary auth table
+      console.log('Checking users table first for ID:', user.id);
+      const { data: userData, error: userError } = await supabase
+        .from('users')
         .select('*')
         .eq('id', user.id)
         .single();
-
-      if (error) {
-        console.log('Error fetching profile:', error);
+      
+      // Log what we got from the users table  
+      console.log('Users table query result:', {
+        success: !userError,
+        data: userData ? 'found' : 'not found',
+        error: userError ? userError.message : null
+      });
         
-        // Check if error is related to missing table
-        if (error.message.includes('does not exist')) {
-          setNeedsProfileTable(true);
-        } else {
-          // Try to create a profile if it doesn't exist (e.g., first login)
+      if (userError) {
+        console.error('Error fetching from users table:', userError);
+        
+        // Fall back to profiles table if users query failed
+        console.log('Falling back to profiles table check');
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
+          
+          // Log what we got from the profiles table
+          console.log('Profiles table query result:', {
+            success: !error,
+            data: data ? 'found' : 'not found',
+            error: error ? error.message : null
+          });
+  
+          if (error) {
+            console.log('Error fetching profile from profiles table:', error);
+            
+            // Check if error is related to missing table
+            if (error.message.includes('does not exist')) {
+              console.log('Profiles table does not exist, setting up table...');
+              setNeedsProfileTable(true);
+              setLoading(false);
+              return;
+            }
+            
+            // Use data from localStorage as last resort
+            console.log('Using localStorage data as fallback');
+            
+            // Create a minimal profile from localStorage user data
+            const minimalProfile = {
+              ...profileData,
+              first_name: user.first_name || '',
+              last_name: user.last_name || '',
+              phone: user.phone || '',
+              avatar_url: user.avatar_url || null,
+            };
+            
+            console.log('Setting profile data from localStorage:', minimalProfile);
+            setProfileData(minimalProfile);
+          } else if (data) {
+            // Successfully got profile data
+            console.log('Successfully fetched profile data from profiles table:', data);
+            
+            // Convert address format if it exists
+            let addressData = profileData.address;
+            if (data.address && typeof data.address === 'object') {
+              addressData = {
+                street: data.address.street || '',
+                city: data.address.city || '',
+                state: data.address.state || '',
+                postal_code: data.address.postal_code || '',
+                country: data.address.country || ''
+              };
+            }
+            
+            // Convert social links format if it exists
+            let socialLinksData = profileData.social_links;
+            if (data.social_links && typeof data.social_links === 'object') {
+              socialLinksData = {
+                facebook: data.social_links.facebook || '',
+                twitter: data.social_links.twitter || '',
+                instagram: data.social_links.instagram || '',
+                linkedin: data.social_links.linkedin || ''
+              };
+            }
+            
+            // Build the complete profile data
+            const completeProfile = {
+              first_name: data.first_name || '',
+              last_name: data.last_name || '',
+              phone: data.phone || '',
+              avatar_url: data.avatar_url || null,
+              bio: data.bio || '',
+              birth_date: data.birth_date || '',
+              gender: data.gender || '',
+              occupation: data.occupation || '',
+              address: addressData,
+              website: data.website || '',
+              social_links: socialLinksData,
+              privacy_level: data.privacy_level || 'private'
+            };
+            
+            console.log('Setting profile data from profiles table:', completeProfile);
+            // Update profile data with fetched data
+            setProfileData(completeProfile);
+          }
+        } catch (err) {
+          console.error('Error in fetchProfile:', err);
+          setError(err instanceof Error ? err.message : 'Failed to load profile data');
+        }
+      } else if (userData) {
+        // Successfully got user data
+        console.log('Successfully fetched user data from users table:', userData);
+        
+        // Convert address format if it exists
+        let addressData = {
+          street: '',
+          city: '',
+          state: '',
+          postal_code: '',
+          country: ''
+        };
+        
+        if (userData.address && typeof userData.address === 'object') {
+          addressData = {
+            street: userData.address.street || '',
+            city: userData.address.city || '',
+            state: userData.address.state || '',
+            postal_code: userData.address.postal_code || '',
+            country: userData.address.country || ''
+          };
+        }
+        
+        // Check if profiles table exists and create a profile entry if needed
+        const { data: profileExists, error: profileCheckError } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('id', user.id)
+          .single();
+          
+        if (profileCheckError && !profileCheckError.message.includes('does not exist')) {
+          // If profiles table exists but user profile doesn't, create it
+          console.log('Creating profile record from user data');
           const { error: insertError } = await supabase
             .from('profiles')
             .insert([
               { 
                 id: user.id,
-                first_name: user.first_name || '',
-                last_name: user.last_name || ''
+                first_name: userData.first_name || '',
+                last_name: userData.last_name || '',
+                phone: userData.phone || '',
+                avatar_url: userData.avatar_url || null,
+                address: addressData
               }
             ]);
-          
+            
           if (insertError) {
             console.error("Failed to create initial profile:", insertError);
           }
+        } else if (profileCheckError && profileCheckError.message.includes('does not exist')) {
+          // If profiles table doesn't exist, mark it for creation
+          console.log('Profiles table does not exist, marking for creation');
+          setNeedsProfileTable(true);
         }
+          
+        // Build the profile data object from user data
+        const userProfile = {
+          ...profileData,
+          first_name: userData.first_name || '',
+          last_name: userData.last_name || '',
+          phone: userData.phone || '',
+          avatar_url: userData.avatar_url || null,
+          address: addressData
+        };
         
-        // Fall back to user data from localStorage
-        setProfileData({
-          first_name: user.first_name || '',
-          last_name: user.last_name || '',
-          phone: user.phone || '',
-          avatar_url: user.avatar_url || null,
-          bio: user.bio || '',
-          birth_date: user.birth_date || '',
-          gender: user.gender || '',
-          occupation: user.occupation || '',
-          address: user.address || {
-            street: '',
-            city: '',
-            state: '',
-            postal_code: '',
-            country: ''
-          },
-          website: user.website || '',
-          social_links: user.social_links || {
-            facebook: '',
-            twitter: '',
-            instagram: '',
-            linkedin: ''
-          },
-          privacy_level: user.privacy_level || 'private'
-        });
-      } else {
-        console.log('Profile found:', data);
-        // Parse JSON fields if they're stored as strings
-        const address = typeof data.address === 'string' ? JSON.parse(data.address) : 
-                        data.address || {
-                          street: '',
-                          city: '',
-                          state: '',
-                          postal_code: '',
-                          country: ''
-                        };
-                        
-        const socialLinks = typeof data.social_links === 'string' ? JSON.parse(data.social_links) : 
-                          data.social_links || {
-                            facebook: '',
-                            twitter: '',
-                            instagram: '',
-                            linkedin: ''
-                          };
-        
-        // Format birth_date for the form (YYYY-MM-DD)
-        let formattedBirthDate = '';
-        if (data.birth_date) {
-          try {
-            const date = new Date(data.birth_date);
-            if (!isNaN(date.getTime())) {
-              formattedBirthDate = date.toISOString().split('T')[0];
-            }
-          } catch (e) {
-            console.error('Error formatting birth date:', e);
-          }
-        }
-        
-        setProfileData({
-          first_name: data.first_name || '',
-          last_name: data.last_name || '',
-          phone: data.phone || '',
-          avatar_url: data.avatar_url || null,
-          bio: data.bio || '',
-          birth_date: formattedBirthDate,
-          gender: data.gender || '',
-          occupation: data.occupation || '',
-          address,
-          website: data.website || '',
-          social_links: socialLinks,
-          privacy_level: data.privacy_level || 'private'
-        });
+        console.log('Setting profile data from users table:', userProfile);
+        // Set profile data from the users table
+        setProfileData(userProfile);
       }
-
-      // Calculate profile completeness
-      calculateProfileCompleteness();
-    } catch (error: any) {
-      console.error('Error fetching profile:', error);
-      setError('Failed to load profile data: ' + error.message);
+      
+      // Calculate profile completeness after loading data
+      setTimeout(() => {
+        calculateProfileCompleteness();
+      }, 500);
+      
+    } catch (err) {
+      console.error('Error in fetchProfile:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load profile data');
     } finally {
       setLoading(false);
     }
@@ -326,6 +465,9 @@ const ProfilePage: React.FC = () => {
 
   // Calculate profile completeness score (0-100)
   const calculateProfileCompleteness = () => {
+    console.log("Calculating profile completeness...");
+    
+    // List all fields to check
     const fields = [
       profileData.first_name,
       profileData.last_name, 
@@ -347,18 +489,53 @@ const ProfilePage: React.FC = () => {
       profileData.social_links.linkedin
     ];
     
+    // Debug log to see what fields have values
+    console.log("Profile fields:", fields.map(field => field ? 'filled' : 'empty'));
+    
     // Count filled fields (non-empty)
-    const filledFields = fields.filter(field => field && field.trim() !== '').length;
+    const filledFields = fields.filter(field => field && String(field).trim() !== '').length;
     
     // Calculate percentage (rounded to nearest integer)
     const percentage = Math.round((filledFields / fields.length) * 100);
     
+    console.log(`Profile completeness: ${filledFields}/${fields.length} fields = ${percentage}%`);
+    
     setProfileCompleteness(percentage);
   };
 
+  // Get CSS class for profile completeness
+  const getProfileCompletenessColor = () => {
+    if (profileCompleteness < 30) return 'bg-red-500';
+    if (profileCompleteness < 70) return 'bg-yellow-500';
+    return 'bg-green-500';
+  };
+  
+  // Calculate profile completeness whenever profileData changes
   useEffect(() => {
-    fetchProfile();
-  }, [user]);
+    if (!loading) {
+      calculateProfileCompleteness();
+    }
+  }, [profileData, loading]);
+
+  // Debug profile data whenever it changes
+  useEffect(() => {
+    if (!loading) {
+      console.log('Current profile data state:', {
+        first_name: profileData.first_name,
+        last_name: profileData.last_name,
+        phone: profileData.phone,
+        bio: profileData.bio?.substring(0, 20) + (profileData.bio?.length > 20 ? '...' : ''),
+        // Log other key fields to verify they're populated correctly
+      });
+    }
+  }, [profileData, loading]);
+  
+  // Ensure user fetch triggers only once and causes a proper re-render
+  useEffect(() => {
+    if (user && user.id && !loading) {
+      console.log('Profile inputs should now be populated with user data:', user.id);
+    }
+  }, [user, loading]);
 
   // Input change handlers for different field types
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -548,107 +725,126 @@ const ProfilePage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (!user) {
-      toast.error('You must be logged in to update your profile');
-      setError('User not authenticated. Please sign in again.');
+      toast.error("You must be logged in to update your profile");
       return;
     }
-
-    // Validate form
+    
+    // Validate form data
     if (!validateForm()) {
-      toast.error('Please fix the errors in the form');
+      toast.error("Please fix the validation errors before saving");
       return;
     }
-
+    
     setSaving(true);
     setError(null);
-
+    
     try {
       // Upload avatar if changed
-      let avatarUrl = profileData.avatar_url;
+      let newAvatarUrl = profileData.avatar_url;
       if (avatarFile) {
-        avatarUrl = await uploadAvatar();
+        newAvatarUrl = await uploadAvatar();
       }
-
-      // Prepare profile data with updated avatar URL
-      const updatedProfile = {
-        ...profileData,
-        avatar_url: avatarUrl
-      };
       
-      // Format the birth_date for database (to ISO string)
+      // Format date for database
       let formattedBirthDate = null;
-      if (updatedProfile.birth_date) {
+      if (profileData.birth_date) {
         try {
-          const date = new Date(updatedProfile.birth_date);
+          // Ensure correct format for Postgres (YYYY-MM-DD)
+          const date = new Date(profileData.birth_date);
           if (!isNaN(date.getTime())) {
-            formattedBirthDate = date.toISOString();
+            formattedBirthDate = date.toISOString().split('T')[0];
           }
         } catch (e) {
-          console.error('Error formatting birth date for save:', e);
+          console.error('Error formatting birth date:', e);
         }
       }
-
-      // Update profile in profiles table
+      
+      // Prepare profile data for update
+      const profileUpdateData = {
+        first_name: profileData.first_name,
+        last_name: profileData.last_name,
+        phone: profileData.phone ? profileData.phone.trim() : null,
+        avatar_url: newAvatarUrl,
+        bio: profileData.bio || null,
+        birth_date: formattedBirthDate,
+        gender: profileData.gender || null,
+        occupation: profileData.occupation || null,
+        address: profileData.address,
+        website: profileData.website || null,
+        social_links: profileData.social_links,
+        privacy_level: profileData.privacy_level,
+        updated_at: new Date().toISOString()
+      };
+      
+      // Update profiles table
       const { error: profileError } = await supabase
         .from('profiles')
-        .upsert({
-          id: user.id,
-          first_name: updatedProfile.first_name,
-          last_name: updatedProfile.last_name,
-          phone: updatedProfile.phone ? updatedProfile.phone.trim() : null,
-          avatar_url: updatedProfile.avatar_url,
-          bio: updatedProfile.bio,
-          birth_date: formattedBirthDate,
-          gender: updatedProfile.gender,
-          occupation: updatedProfile.occupation,
-          address: updatedProfile.address,
-          website: updatedProfile.website,
-          social_links: updatedProfile.social_links,
-          privacy_level: updatedProfile.privacy_level,
-          updated_at: new Date().toISOString()
-        });
-
+        .upsert([
+          {
+            id: user.id,
+            ...profileUpdateData
+          }
+        ]);
+      
       if (profileError) {
-        // Log the specific error for debugging
-        console.error('Profile update error:', profileError);
-        throw profileError;
+        console.error('Error updating profile:', profileError);
+        throw new Error(`Failed to update profile: ${profileError.message}`);
       }
-
-      // For custom auth, update the user in localStorage with the new profile data
-      try {
-        const updatedUser = {
-          ...user,
-          first_name: updatedProfile.first_name,
-          last_name: updatedProfile.last_name,
-          phone: updatedProfile.phone,
-          avatar_url: updatedProfile.avatar_url,
-          // Add other fields as needed
-        };
-        
-        // Update localStorage
-        localStorage.setItem('user', JSON.stringify(updatedUser));
-        
-        // Update component state
-        setUser(updatedUser);
-      } catch (err) {
-        console.warn('Error updating local user data:', err);
-        // Continue anyway as the database update succeeded
+      
+      // Also update basic information in the custom users table for consistency
+      const { error: userError } = await supabase
+        .from('users')
+        .update({
+          first_name: profileData.first_name,
+          last_name: profileData.last_name,
+          phone: profileData.phone ? profileData.phone.trim() : null,
+          avatar_url: newAvatarUrl,
+          address: profileData.address,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
+      
+      if (userError) {
+        console.error('Error updating user data:', userError);
+        // Don't throw here, as the profiles update succeeded
+        toast.error('Profile updated, but some changes could not be synced to user account.');
+      } else {
+        // Update local storage with new user data
+        try {
+          const storedUser = localStorage.getItem('user');
+          if (storedUser) {
+            const userData = JSON.parse(storedUser);
+            const updatedUser = {
+              ...userData,
+              first_name: profileData.first_name,
+              last_name: profileData.last_name,
+              phone: profileData.phone ? profileData.phone.trim() : null,
+              avatar_url: newAvatarUrl,
+              address: profileData.address
+            };
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+            setUser(updatedUser);
+          }
+        } catch (err) {
+          console.error('Error updating localStorage:', err);
+        }
       }
-
-      // Update local avatar state
-      setProfileData(prev => ({...prev, avatar_url: avatarUrl}));
+      
+      // Show success message
+      toast.success('Profile updated successfully!');
+      
+      // Reset states
       setAvatarFile(null);
       setAvatarPreview(null);
       
       // Update profile completeness
       calculateProfileCompleteness();
-      
-      toast.success('Profile updated successfully');
-    } catch (error: any) {
-      console.error('Error updating profile:', error);
-      setError(error.message || 'Failed to update profile');
-      toast.error(error.message || 'Failed to update profile');
+    } catch (err) {
+      console.error('Error in handleSubmit:', err);
+      setError(err instanceof Error ? err.message : 'An error occurred while saving your profile');
+      toast.error(err instanceof Error ? err.message : 'Failed to update profile');
     } finally {
       setSaving(false);
     }
@@ -664,9 +860,14 @@ const ProfilePage: React.FC = () => {
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate passwords
-    if (newPassword.length < 8) {
-      toast.error('New password must be at least 8 characters long');
+    // Basic validation
+    if (!currentPassword) {
+      toast.error('Current password is required');
+      return;
+    }
+    
+    if (!newPassword) {
+      toast.error('New password is required');
       return;
     }
     
@@ -675,45 +876,56 @@ const ProfilePage: React.FC = () => {
       return;
     }
     
+    if (newPassword.length < 6) {
+      toast.error('New password must be at least 6 characters long');
+      return;
+    }
+    
     setChangingPassword(true);
     
     try {
-      // First authenticate the user with current password
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: user?.email || '',
-        password: currentPassword
+      // Since we're using a custom users table, we need a different approach
+      // This needs to be implemented on your backend API
+      
+      // For a custom users table, you would typically:
+      // 1. Send the current and new password to a secure API endpoint
+      // 2. Verify the current password server-side
+      // 3. Hash the new password and update the database
+      
+      // Example implementation (simplified - this will need to be replaced with your actual API call):
+      toast.success('Password changes cannot be processed directly. Please use the dedicated password reset function or contact support.');
+      
+      // If you have an API endpoint for password changes, you would use it like this:
+      /*
+      const response = await fetch('/api/change-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user.token}` // If you're using tokens
+        },
+        body: JSON.stringify({
+          currentPassword,
+          newPassword
+        })
       });
       
-      if (signInError) {
-        throw new Error('Current password is incorrect');
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Failed to change password');
       }
       
-      // Update password
-      const { error: updateError } = await supabase.auth.updateUser({
-        password: newPassword
-      });
-      
-      if (updateError) throw updateError;
-      
-      // Reset form fields
+      toast.success('Password changed successfully');
+      // Clear form
       setCurrentPassword('');
       setNewPassword('');
       setConfirmNewPassword('');
-      
-      toast.success('Password changed successfully');
-    } catch (error: any) {
-      console.error('Error changing password:', error);
-      toast.error(error.message || 'Failed to change password');
+      */
+    } catch (err) {
+      console.error('Error changing password:', err);
+      toast.error(err instanceof Error ? err.message : 'Failed to change password');
     } finally {
       setChangingPassword(false);
     }
-  };
-  
-  // Get CSS class for profile completeness
-  const getProfileCompletenessColor = () => {
-    if (profileCompleteness < 30) return 'bg-red-500';
-    if (profileCompleteness < 70) return 'bg-yellow-500';
-    return 'bg-green-500';
   };
   
   // Render tab content based on active tab
@@ -820,7 +1032,7 @@ const ProfilePage: React.FC = () => {
             type="tel"
             name="phone"
             id="phone"
-            value={profileData.phone}
+            value={profileData.phone || ''}
             onChange={handleInputChange}
             className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white text-base py-2 ${validationErrors['phone'] ? 'border-red-300 dark:border-red-500' : ''}`}
             placeholder="Phone Number"
@@ -1334,7 +1546,8 @@ const ProfilePage: React.FC = () => {
             </span>
             <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
               <div 
-                className={`h-2.5 rounded-full ${getProfileCompletenessColor()} w-[${profileCompleteness}%]`}
+                className={`h-2.5 rounded-full ${getProfileCompletenessColor()}`}
+                style={{ width: `${profileCompleteness}%` }}
               ></div>
             </div>
           </div>

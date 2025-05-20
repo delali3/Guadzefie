@@ -607,7 +607,7 @@ const ProductListPage: React.FC = () => {
                     </div>
                     <div className="md:w-1/3 flex justify-center">
                         <img 
-                            src="https://source.unsplash.com/random/400x300/?ghana+farming" 
+                            src="/assets/images/african-man-harvesting-vegetables.jpg" 
                             alt="Ghanaian Farming" 
                             className="rounded-lg shadow-sm max-h-40 object-cover"
                         />

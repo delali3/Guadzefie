@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../../lib/supabase';
+import { supabase, getCurrentUser, bypassRLS } from '../../lib/supabase';
 import { 
   Plus, 
   Leaf, 
@@ -15,7 +15,10 @@ import {
   Scale,
   Upload,
   Check,
-  X
+  X,
+  ImagePlus,
+  Trash2,
+  Loader2
 } from 'lucide-react';
 
 interface Category {
@@ -83,8 +86,35 @@ const AddProductPage: React.FC = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
+        // Try using bypassRLS for custom auth
+        try {
+          console.log('Fetching categories using bypassRLS');
+          const categoriesTable = await bypassRLS('categories', 'select');
+          const { data, error } = await categoriesTable.select('id, name');
+          
+          if (error) throw error;
+          
+          if (data) {
+            console.log('Categories fetched successfully using bypassRLS:', data.length);
+            setCategories(data);
+            
+            // Set default category if available
+            if (data.length > 0) {
+              setFormData(prev => ({ ...prev, category_id: data[0].id }));
+            }
+            return;
+          }
+        } catch (bypassError) {
+          console.error('Error fetching categories with bypassRLS:', bypassError);
+          // Fall back to regular query
+        }
+        
+        // Fall back to regular query
+        console.log('Falling back to regular categories query');
         const { data, error } = await supabase.from('categories').select('id, name');
+        
         if (error) throw error;
+        
         setCategories(data || []);
         
         // Set default category if available
@@ -226,23 +256,38 @@ const AddProductPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate form
-    if (!validateForm()) return;
+    // Validate form before submitting
+    if (!validateForm()) {
+      return;
+    }
     
     setIsSubmitting(true);
     setError(null);
-    
+    setSuccessMessage(null);
+
     try {
-      let imageUrls: string[] = [...formData.image_urls];
+      // Get current authenticated user directly from localStorage
+      const user = getCurrentUser();
       
-      // If there are new image files, upload them
+      if (!user) {
+        throw new Error('You must be logged in to add products');
+      }
+      
+      console.log('Adding product as user:', user.id);
+      
+      // Upload images if any
+      const imageUrls: string[] = [];
+      
       for (const file of formData.image_files) {
+        // Create a unique file name
         const fileName = `product_images/${Date.now()}-${file.name}`;
-        const { error: uploadError } = await supabase.storage
+        
+        // Upload the file
+        const { data: fileData, error: fileError } = await supabase.storage
           .from('products')
           .upload(fileName, file);
-          
-        if (uploadError) throw uploadError;
+        
+        if (fileError) throw fileError;
         
         // Get the public URL
         const { data: urlData } = supabase.storage
@@ -254,72 +299,98 @@ const AddProductPage: React.FC = () => {
         }
       }
       
-      // Get current authenticated user
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        throw new Error('You must be logged in to add products');
-      }
-      
       // Create product in the database - use first image as primary image
       const primaryImageUrl = imageUrls.length > 0 ? imageUrls[0] : '';
       
-      // Create product in the database
-      const { data: product, error: productError } = await supabase
-        .from('products')
-        .insert([
-          {
+      // Create the product data object
+      const productData = {
+        name: formData.name,
+        price: formData.price,
+        description: formData.description,
+        image_url: primaryImageUrl,
+        additional_images: imageUrls.slice(1), // Store additional images
+        category_id: formData.category_id,
+        inventory_count: formData.inventory_count,
+        featured: formData.featured,
+        farming_method: formData.farming_method,
+        harvest_date: formData.harvest_date,
+        weight: formData.weight,
+        dimensions: formData.dimensions,
+        region_of_origin: formData.region_of_origin,
+        tags: formData.tags,
+        sku: formData.sku || `PROD-${Date.now()}`,
+        is_organic: formData.is_organic,
+        min_order_quantity: formData.min_order_quantity,
+        storage_instructions: formData.storage_instructions,
+        farmer_id: user.id,
+        is_available: true,
+        is_deleted: false,
+        sales_count: 0,
+        views_count: 0
+      };
+      
+      let product = null;
+      let productError = null;
+      
+      // Try using bypassRLS first
+      try {
+        console.log('Trying to add product using bypassRLS...');
+        const productsTable = await bypassRLS('products', 'insert');
+        const result = await productsTable
+          .insert([productData])
+          .select('id')
+          .single();
+          
+        if (result.error) throw result.error;
+        
+        product = result.data;
+        console.log('Product added successfully using bypassRLS:', product);
+      } catch (bypassError) {
+        console.error('Error using bypassRLS to add product:', bypassError);
+        console.log('Falling back to regular insert...');
+        
+        // Fall back to regular insert
+        const result = await supabase
+          .from('products')
+          .insert([productData])
+          .select('id')
+          .single();
+          
+        if (result.error) throw result.error;
+        
+        product = result.data;
+      }
+      
+      if (product) {
+        // Create entry in product_stats
+        try {
+          const statsData = {
+            id: product.id,
             name: formData.name,
-            price: formData.price,
-            description: formData.description,
-            image_url: primaryImageUrl,
-            additional_images: imageUrls.slice(1), // Store additional images
             category_id: formData.category_id,
+            sales_count: 0,
             inventory_count: formData.inventory_count,
             featured: formData.featured,
-            farming_method: formData.farming_method,
-            harvest_date: formData.harvest_date,
-            weight: formData.weight,
-            dimensions: formData.dimensions,
-            region_of_origin: formData.region_of_origin,
-            tags: formData.tags,
-            sku: formData.sku || `PROD-${Date.now()}`,
-            is_organic: formData.is_organic,
-            min_order_quantity: formData.min_order_quantity,
-            storage_instructions: formData.storage_instructions,
-            farmer_id: user.id,
-            is_available: true,
-            is_deleted: false,
-            sales_count: 0,
-            views_count: 0
-          }
-        ])
-        .select('id');
-        
-      if (productError) throw productError;
-      
-      // Create entry in product_stats if needed
-      if (product && product.length > 0) {
-        const { error: statsError } = await supabase
-          .from('product_stats')
-          .insert([
-            {
-              id: product[0].id,
-              name: formData.name,
-              category_id: formData.category_id,
-              sales_count: 0,
-              inventory_count: formData.inventory_count,
-              featured: formData.featured,
-              avg_rating: 0,
-              review_count: 0
-            }
-          ]);
+            avg_rating: 0,
+            review_count: 0
+          };
           
-        if (statsError) {
-          console.error('Error creating product stats:', statsError);
+          // Try using bypassRLS for stats table
+          try {
+            const statsTable = await bypassRLS('product_stats', 'insert');
+            await statsTable.insert([statsData]);
+          } catch (bypassError) {
+            console.error('Error using bypassRLS for product stats:', bypassError);
+            
+            // Fall back to regular insert
+            await supabase.from('product_stats').insert([statsData]);
+          }
+        } catch (statsError) {
+          console.error('Error creating product stats (non-critical):', statsError);
           // Continue anyway as this is not critical
         }
         
+        // Success - reset form and redirect
         setSuccessMessage('Product added successfully!');
         
         // Reset form

@@ -1,21 +1,7 @@
 // src/components/layouts/AdminLayout.tsx
 import React, { useState } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  Package, 
-  ShoppingBag, 
-  Users, 
-  Settings, 
-  LogOut, 
-  Moon,
-  Sun,
-  Menu,
-  X,
-  ChevronRight,
-  Bell,
-  Search
-} from 'lucide-react';
+import {   LayoutDashboard,   Package,   ShoppingBag,   Users,   Settings,   LogOut,   Moon,  Sun,  Menu,  X,  ChevronRight,  Bell,  Search} from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 interface AdminLayoutProps {
@@ -35,7 +21,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ darkMode, toggleDarkMode }) =
   const navItems = [
     { name: 'Dashboard', icon: <LayoutDashboard size={20} />, href: '/admin' },
     { name: 'Products', icon: <Package size={20} />, href: '/admin/products' },
-    { name: 'Orders', icon: <ShoppingBag size={20} />, href: '/admin/orders' },
+  // Define navigation items
     { name: 'Customers', icon: <Users size={20} />, href: '/admin/customers' },
     { name: 'Settings', icon: <Settings size={20} />, href: '/admin/settings' },
   ];

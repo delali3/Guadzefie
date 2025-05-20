@@ -21,7 +21,6 @@ interface OrderItem {
   id: string;
   product_id: string;
   quantity: number;
-  price: number;
   product: {
     id: string;
     name: string;
@@ -45,11 +44,13 @@ interface Order {
   } | null;
   order_items: OrderItem[];
   shipping_address: {
-    street: string;
+    address?: string;
+    street?: string;
     city: string;
     state: string;
     postal_code: string;
     country: string;
+    address_line2?: string;
   } | null;
   estimated_delivery?: string;
   payment_method?: string;
@@ -90,7 +91,7 @@ const FarmOrderDetailsPage: React.FC = () => {
       const { data: productsData, error: productsError } = await supabase
         .from('products')
         .select('id')
-        .eq('owner_id', user.id);
+        .or(`owner_id.eq.${user.id},farmer_id.eq.${user.id},vendor_id.eq.${user.id}`);
 
       if (productsError) throw productsError;
 
@@ -98,7 +99,10 @@ const FarmOrderDetailsPage: React.FC = () => {
         throw new Error("No products found for this farm");
       }
 
-      const farmProductIds = productsData.map(product => product.id);
+      // Convert all IDs to strings to handle both number and string IDs
+      const farmProductIds = productsData.map(product => String(product.id));
+      
+      console.log("Farm product IDs:", farmProductIds);
 
       // Get order with details
       const { data: orderData, error: orderError } = await supabase
@@ -108,7 +112,7 @@ const FarmOrderDetailsPage: React.FC = () => {
           created_at, 
           status, 
           total_amount,
-          order_items(id, product_id, quantity, price, product:product_id(id, name, price, quantity, image_url)),
+          order_items(id, product_id, quantity, product:product_id(id, name, price, quantity, image_url)),
           user:user_id(id, email, first_name, last_name, phone),
           shipping_address,
           estimated_delivery,
@@ -125,28 +129,57 @@ const FarmOrderDetailsPage: React.FC = () => {
         throw new Error("Order not found");
       }
 
+      console.log("Raw order data from Supabase:", JSON.stringify(orderData, null, 2));
+
       // Map order items to correct format (product comes as array from Supabase)
-      const formattedOrderItems = orderData.order_items.map(item => ({
-        ...item,
-        product: item.product[0] // Extract single product object from array
-      }));
+      const formattedOrderItems = orderData.order_items.map(item => {
+        // Check if product data is present and properly structured
+        if (!item.product || !Array.isArray(item.product) || item.product.length === 0) {
+          console.error(`Product data missing for item: ${item.id}, product_id: ${item.product_id}`);
+          // Provide default product data
+          return {
+            ...item,
+            product: {
+              id: item.product_id,
+              name: "Unknown Product",
+              price: 0,
+              quantity: item.quantity || 0,
+              image_url: null
+            }
+          };
+        }
+        
+        // Extract product from array
+        return {
+          ...item,
+          product: item.product[0] // Extract single product object from array
+        };
+      });
+
+      console.log("Formatted order items:", JSON.stringify(formattedOrderItems, null, 2));
 
       // Filter to only show items from this farm's products
       const formattedFarmItems = formattedOrderItems.filter(item => 
-        farmProductIds.includes(item.product_id)
+        farmProductIds.includes(String(item.product_id))
       );
+
+      console.log("Filtered farm items:", JSON.stringify(formattedFarmItems, null, 2));
 
       // Calculate subtotal for this farm's items only
       const subtotal = formattedFarmItems.reduce((sum, item) => {
-        return sum + (item.price * item.quantity);
+        // Get price from product since order_items doesn't have price
+        const itemPrice = item.product ? item.product.price : 0;
+        return sum + (itemPrice * item.quantity);
       }, 0);
 
       // Format the complete order data with correct types
       const formattedOrderData = {
         ...orderData,
-        user: orderData.user?.[0] || null,
+        user: Array.isArray(orderData.user) && orderData.user.length > 0 ? orderData.user[0] : null,
         order_items: formattedOrderItems
       };
+
+      console.log("Final formatted order data:", JSON.stringify(formattedOrderData, null, 2));
 
       setOrder(formattedOrderData);
       setFarmProductsOnly(formattedFarmItems);
@@ -217,8 +250,10 @@ const FarmOrderDetailsPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+      <div className="flex flex-col justify-center items-center h-64 bg-white dark:bg-gray-800 rounded-lg shadow p-8">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500 mb-4"></div>
+        <p className="text-gray-600 dark:text-gray-400 text-lg font-semibold">Loading order details...</p>
+        <p className="text-gray-500 dark:text-gray-500 text-sm mt-2">Please wait while we retrieve the order information</p>
       </div>
     );
   }
@@ -316,11 +351,11 @@ const FarmOrderDetailsPage: React.FC = () => {
                     className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     aria-label="Update order status"
                   >
-                    <option value="pending">Pending</option>
-                    <option value="processing">Processing</option>
-                    <option value="shipped">Shipped</option>
-                    <option value="delivered">Delivered</option>
-                    <option value="canceled">Canceled</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Processing">Processing</option>
+                    <option value="Shipped">Shipped</option>
+                    <option value="Delivered">Delivered</option>
+                    <option value="Canceled">Canceled</option>
                   </select>
                 </div>
                 {updatingStatus && (
@@ -337,25 +372,25 @@ const FarmOrderDetailsPage: React.FC = () => {
                   </div>
                   <div className="relative flex justify-between">
                     <div className="flex flex-col items-center">
-                      <div className={`-m-1.5 p-1.5 rounded-full ${order.status !== 'canceled' ? 'bg-green-500' : 'bg-gray-400'}`}>
+                      <div className={`-m-1.5 p-1.5 rounded-full ${order.status !== 'Canceled' ? 'bg-green-500' : 'bg-gray-400'}`}>
                         <CheckCircle className="h-5 w-5 text-white" />
                       </div>
                       <span className="mt-2 text-xs text-gray-500 dark:text-gray-400">Ordered</span>
                     </div>
                     <div className="flex flex-col items-center">
-                      <div className={`-m-1.5 p-1.5 rounded-full ${['processing', 'shipped', 'delivered'].includes(order.status) ? 'bg-green-500' : 'bg-gray-400'}`}>
+                      <div className={`-m-1.5 p-1.5 rounded-full ${['Processing', 'Shipped', 'Delivered'].includes(order.status) ? 'bg-green-500' : 'bg-gray-400'}`}>
                         <Clock className="h-5 w-5 text-white" />
                       </div>
                       <span className="mt-2 text-xs text-gray-500 dark:text-gray-400">Processing</span>
                     </div>
                     <div className="flex flex-col items-center">
-                      <div className={`-m-1.5 p-1.5 rounded-full ${['shipped', 'delivered'].includes(order.status) ? 'bg-green-500' : 'bg-gray-400'}`}>
+                      <div className={`-m-1.5 p-1.5 rounded-full ${['Shipped', 'Delivered'].includes(order.status) ? 'bg-green-500' : 'bg-gray-400'}`}>
                         <Truck className="h-5 w-5 text-white" />
                       </div>
                       <span className="mt-2 text-xs text-gray-500 dark:text-gray-400">Shipped</span>
                     </div>
                     <div className="flex flex-col items-center">
-                      <div className={`-m-1.5 p-1.5 rounded-full ${order.status === 'delivered' ? 'bg-green-500' : 'bg-gray-400'}`}>
+                      <div className={`-m-1.5 p-1.5 rounded-full ${order.status === 'Delivered' ? 'bg-green-500' : 'bg-gray-400'}`}>
                         <CheckCircle className="h-5 w-5 text-white" />
                       </div>
                       <span className="mt-2 text-xs text-gray-500 dark:text-gray-400">Delivered</span>
@@ -375,43 +410,49 @@ const FarmOrderDetailsPage: React.FC = () => {
               </p>
             </div>
             <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-              {farmProductsOnly.map((item) => (
-                <li key={item.id} className="p-4 flex items-center">
-                  <div className="flex-shrink-0 w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded overflow-hidden">
-                    {item.product.image_url ? (
-                      <img 
-                        src={item.product.image_url} 
-                        alt={item.product.name} 
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex items-center justify-center w-full h-full text-gray-500 dark:text-gray-400">
-                        <ShoppingBag className="h-8 w-8" />
-                      </div>
-                    )}
-                  </div>
-                  <div className="ml-4 flex-1">
-                    <div className="flex justify-between">
-                      <div>
-                        <h3 className="text-base font-medium text-gray-900 dark:text-white">
-                          {item.product.name}
-                        </h3>
-                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                          Quantity: {item.quantity}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-base font-medium text-gray-900 dark:text-white">
-                          ${(item.price * item.quantity).toFixed(2)}
-                        </p>
-                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                          ${item.price.toFixed(2)} each
-                        </p>
+              {farmProductsOnly.length > 0 ? (
+                farmProductsOnly.map((item) => (
+                  <li key={item.id} className="p-4 flex items-center">
+                    <div className="flex-shrink-0 w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded overflow-hidden">
+                      {item.product.image_url ? (
+                        <img 
+                          src={item.product.image_url} 
+                          alt={item.product.name} 
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex items-center justify-center w-full h-full text-gray-500 dark:text-gray-400">
+                          <ShoppingBag className="h-8 w-8" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="ml-4 flex-1">
+                      <div className="flex justify-between">
+                        <div>
+                          <h3 className="text-base font-medium text-gray-900 dark:text-white">
+                            {item.product.name}
+                          </h3>
+                          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                            Quantity: {item.quantity}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-base font-medium text-gray-900 dark:text-white">
+                            ${(item.product.price * item.quantity).toFixed(2)}
+                          </p>
+                          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                            ${item.product.price.toFixed(2)} each
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  </li>
+                ))
+              ) : (
+                <li className="p-6 text-center">
+                  <p className="text-gray-500 dark:text-gray-400">No items from your farm in this order.</p>
                 </li>
-              ))}
+              )}
             </ul>
             <div className="p-4 border-t border-gray-200 dark:border-gray-700">
               <div className="flex justify-between text-base font-medium text-gray-900 dark:text-white">
@@ -478,7 +519,12 @@ const FarmOrderDetailsPage: React.FC = () => {
                   <div>
                     <h3 className="text-base font-medium text-gray-900 dark:text-white">Delivery Address</h3>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {order.shipping_address.street}<br />
+                      {order.shipping_address.address || order.shipping_address.street}<br />
+                      {order.shipping_address.address_line2 && (
+                        <>
+                          {order.shipping_address.address_line2}<br />
+                        </>
+                      )}
                       {order.shipping_address.city}, {order.shipping_address.state} {order.shipping_address.postal_code}<br />
                       {order.shipping_address.country}
                     </p>

@@ -47,11 +47,11 @@ interface Order {
 
 const statusOptions = [
   { value: 'all', label: 'All Orders' },
-  { value: 'pending', label: 'Pending' },
-  { value: 'processing', label: 'Processing' },
-  { value: 'shipped', label: 'Shipped' },
-  { value: 'delivered', label: 'Delivered' },
-  { value: 'canceled', label: 'Canceled' }
+  { value: 'Pending', label: 'Pending' },
+  { value: 'Processing', label: 'Processing' },
+  { value: 'Shipped', label: 'Shipped' },
+  { value: 'Delivered', label: 'Delivered' },
+  { value: 'Canceled', label: 'Canceled' }
 ];
 
 const FarmOrdersPage: React.FC = () => {
@@ -85,17 +85,20 @@ const FarmOrdersPage: React.FC = () => {
       const { data: productsData, error: productsError } = await supabase
         .from('products')
         .select('id')
-        .eq('owner_id', user.id);
+        .or(`owner_id.eq.${user.id},farmer_id.eq.${user.id},vendor_id.eq.${user.id}`);
 
       if (productsError) throw productsError;
 
       if (!productsData || productsData.length === 0) {
+        console.log("No products found for current user");
         setOrders([]);
         setIsLoading(false);
         return;
       }
 
-      const farmProductIds = productsData.map(product => product.id);
+      // Convert all IDs to strings to handle both number and string IDs
+      const farmProductIds = productsData.map(product => String(product.id));
+      console.log(`Found ${farmProductIds.length} products for this farm`);
 
       // Build query for orders
       let query = supabase
@@ -105,7 +108,7 @@ const FarmOrdersPage: React.FC = () => {
           created_at, 
           status, 
           total_amount,
-          order_items(id, product_id, product:product_id(id, name, price, quantity)),
+          order_items(id, product_id, quantity, product:product_id(id, name, price, quantity)),
           user:user_id(id, email, first_name, last_name),
           shipping_address,
           estimated_delivery
@@ -147,25 +150,54 @@ const FarmOrdersPage: React.FC = () => {
 
       if (ordersError) throw ordersError;
 
-      const normalizedOrders = (ordersData as any[]).map(order => ({
-        ...order,
-        user: Array.isArray(order.user) ? order.user[0] : order.user,
-        order_items: order.order_items.map((item: any) => ({
-          ...item,
-          product: Array.isArray(item.product) ? item.product[0] : item.product,
-        })),
-      }));
+      console.log("Raw orders data:", ordersData ? ordersData.length : 0, "orders retrieved");
+
+      if (!ordersData || ordersData.length === 0) {
+        setOrders([]);
+        setTotalOrders(0);
+        setTotalPages(1);
+        setIsLoading(false);
+        return;
+      }
+
+      // Normalize data - handle nested objects and arrays
+      const normalizedOrders = ordersData.map(order => {
+        // Process user data (comes as array from Supabase)
+        const userObj = Array.isArray(order.user) && order.user.length > 0 
+          ? order.user[0] 
+          : null;
+        
+        // Process order items (product comes as array for each item)
+        const itemsObj = Array.isArray(order.order_items) 
+          ? order.order_items.map(item => {
+              const productObj = Array.isArray(item.product) && item.product.length > 0
+                ? item.product[0]
+                : { id: item.product_id, name: "Unknown Product", price: 0, quantity: 0 };
+              
+              return {
+                ...item,
+                product: productObj
+              };
+            })
+          : [];
+
+        return {
+          ...order,
+          user: userObj,
+          order_items: itemsObj
+        };
+      });
       
       // Filter orders that contain this farm's products
       const farmOrders = normalizedOrders.filter(order =>
-        order.order_items.some((item: { product_id: string }) =>
-          farmProductIds.includes(item.product_id)
-        )
+        order.order_items.length > 0 && order.order_items.some(item => farmProductIds.includes(String(item.product_id)))
       );
       
+      console.log(`Found ${farmOrders.length} orders containing this farm's products`);
+      
       setOrders(farmOrders);
-      setTotalOrders(count || 0);
-      setTotalPages(Math.ceil((count || 0) / itemsPerPage));
+      setTotalOrders(count || farmOrders.length);
+      setTotalPages(Math.ceil((count || farmOrders.length) / itemsPerPage));
     } catch (err) {
       console.error('Error fetching farm orders:', err);
       setError(err instanceof Error ? err.message : 'Failed to load orders');
@@ -260,8 +292,10 @@ const FarmOrdersPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+      <div className="flex flex-col justify-center items-center h-64 bg-white dark:bg-gray-800 rounded-lg shadow p-8">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500 mb-4"></div>
+        <p className="text-gray-600 dark:text-gray-400 text-lg font-semibold">Loading orders...</p>
+        <p className="text-gray-500 dark:text-gray-500 text-sm mt-2">Please wait while we retrieve your farm orders</p>
       </div>
     );
   }
@@ -435,11 +469,11 @@ const FarmOrdersPage: React.FC = () => {
                         className="text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 p-1 focus:ring-green-500 focus:border-green-500"
                         aria-label={`Update status for order ${order.id}`}
                       >
-                        <option value="pending">Pending</option>
-                        <option value="processing">Processing</option>
-                        <option value="shipped">Shipped</option>
-                        <option value="delivered">Delivered</option>
-                        <option value="canceled">Canceled</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Processing">Processing</option>
+                        <option value="Shipped">Shipped</option>
+                        <option value="Delivered">Delivered</option>
+                        <option value="Canceled">Canceled</option>
                       </select>
                     </td>
                   </tr>
