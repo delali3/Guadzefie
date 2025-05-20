@@ -37,23 +37,23 @@ const FarmLayout: React.FC<FarmLayoutProps> = ({ darkMode, toggleDarkMode }) => 
   const [notificationsOpen, setNotificationsOpen] = useState(false);
 
   // Define navigation items
-  const navItems = [
-    { name: 'Dashboard', icon: <LayoutDashboard size={20} />, href: '/farm' },
-    { name: 'My Products', icon: <Leaf size={20} />, href: '/farm/products' },
-    { name: 'Orders', icon: <ShoppingBag size={20} />, href: '/farm/orders' },
-    { name: 'Deliveries', icon: <Truck size={20} />, href: '/farm/deliveries' },
-    { name: 'Customers', icon: <Users size={20} />, href: '/farm/customers' },
-    { name: 'Reports', icon: <BarChart2 size={20} />, href: '/farm/reports' },
-    { name: 'Settings', icon: <Settings size={20} />, href: '/farm/settings' },
-  ];
+  // const navItems = [
+  //   { name: 'Dashboard', icon: <LayoutDashboard size={20} />, href: '/farm' },
+  //   { name: 'My Products', icon: <Leaf size={20} />, href: '/farm/products' },
+  //   { name: 'Orders', icon: <ShoppingBag size={20} />, href: '/farm/orders' },
+  //   { name: 'Deliveries', icon: <Truck size={20} />, href: '/farm/deliveries' },
+  //   { name: 'Customers', icon: <Users size={20} />, href: '/farm/customers' },
+  //   { name: 'Reports', icon: <BarChart2 size={20} />, href: '/farm/reports' },
+  //   { name: 'Settings', icon: <Settings size={20} />, href: '/farm/settings' },
+  // ];
 
   // Get current path
-  const isActive = (path: string) => {
-    if (path === '/farm') {
-      return location.pathname === '/farm';
-    }
-    return location.pathname.startsWith(path);
-  };
+  // const isActive = (path: string) => {
+  //   if (path === '/farm') {
+  //     return location.pathname === '/farm';
+  //   }
+  //   return location.pathname.startsWith(path);
+  // };
 
   const handleSignOut = async () => {
     try {
