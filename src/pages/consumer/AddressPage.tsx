@@ -21,7 +21,7 @@ interface ShippingAddress {
   id: number | string;
   first_name: string;
   last_name: string;
-  address_line1: string;
+  address_line1?: string;
   address_line2?: string;
   city: string;
   state: string;
@@ -177,7 +177,7 @@ const AddressPage: React.FC = () => {
     setFormData({
       first_name: address.first_name,
       last_name: address.last_name,
-      address: address.address_line1,
+      address: address.address_line1 || '',
       address_line2: address.address_line2 || '',
       city: address.city,
       state: address.state,
@@ -215,15 +215,6 @@ const AddressPage: React.FC = () => {
     }
   };
 
-
-  // Check if the error message indicates a missing table
-  const isTableNotExistError = (errorMessage: string | null) => {
-    return !!errorMessage && (
-      errorMessage.includes('does not exist') || 
-      errorMessage.toLowerCase().includes('table') ||
-      errorMessage.includes('relation')
-    );
-  };
 
   // Function to restart the auth session
   const refreshSession = async () => {
@@ -539,10 +530,10 @@ const AddressPage: React.FC = () => {
             {address.first_name} {address.last_name}
           </h3>
           <div className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-            <p>{address.address_line1}</p>
+            <p>{address.address_line1 || ''}</p>
             <p>{address.city}, {address.state} {address.postal_code}</p>
             <p>{address.country}</p>
-            <p className="mt-2">�� {address.phone}</p>
+            <p className="mt-2">☎ {address.phone}</p>
           </div>
         </div>
       </div>

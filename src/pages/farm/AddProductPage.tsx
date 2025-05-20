@@ -280,7 +280,7 @@ const AddProductPage: React.FC = () => {
         const fileName = `product_images/${Date.now()}-${file.name}`;
         
         // Upload the file
-        const { data: fileData, error: fileError } = await supabase.storage
+        const {error: fileError } = await supabase.storage
           .from('products')
           .upload(fileName, file);
         
