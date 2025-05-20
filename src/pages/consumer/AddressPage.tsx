@@ -75,6 +75,9 @@ const AddressPage: React.FC = () => {
     is_default: false
   });
 
+  // State for loading timeout
+  const [loadingTimeout, setLoadingTimeout] = useState(false);
+
   // Get current user from localStorage
   useEffect(() => {
     try {
@@ -89,8 +92,32 @@ const AddressPage: React.FC = () => {
 
   // Fetch addresses when component mounts
   useEffect(() => {
-    fetchAddresses();
-  }, [fetchAddresses]);
+    // Only fetch if user is logged in
+    if (user) {
+      fetchAddresses();
+    } else {
+      // Try to get user from localStorage again
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        const userData = JSON.parse(userStr);
+        setUser(userData);
+        fetchAddresses();
+      }
+    }
+  }, [fetchAddresses, user]);
+
+  // Set a timeout to prevent infinite loading
+  useEffect(() => {
+    if (loading) {
+      const timer = setTimeout(() => {
+        setLoadingTimeout(true);
+      }, 5000); // 5 seconds timeout
+      
+      return () => clearTimeout(timer);
+    } else {
+      setLoadingTimeout(false);
+    }
+  }, [loading]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target as HTMLInputElement;
@@ -215,37 +242,26 @@ const AddressPage: React.FC = () => {
     }
   };
 
-
-  // Function to restart the auth session
-  const refreshSession = async () => {
-    // Since we're using custom auth, just reload user from localStorage
+  // Force refresh function
+  const handleForceRefresh = () => {
+    // Clear any previous errors
+    if (error) {
+      // For this to work, we would need access to dispatch, but we can at least retry fetch
+      fetchAddresses();
+    }
+    
+    // Try to refresh the user data
     try {
       const userStr = localStorage.getItem('user');
       if (userStr) {
         setUser(JSON.parse(userStr));
-        return true;
-      }
-      return false;
-    } catch (error) {
-      console.error('Error reloading user data:', error);
-      return false;
-    }
-  };
-
-  // Function to check auth and restart auth session
-  const handleAuthRefresh = async () => {
-    try {
-      const success = await refreshSession();
-      if (success) {
-        toast.success('Session refreshed successfully');
-        await fetchAddresses();
-      } else {
-        toast.error('Failed to refresh session. Please sign out and sign in again.');
       }
     } catch (error) {
-      console.error('Error refreshing auth:', error);
-      toast.error('Error refreshing auth session');
+      console.error('Error refreshing user data:', error);
     }
+    
+    // Attempt to fetch addresses again
+    fetchAddresses();
   };
 
   // Render error with actions
@@ -274,7 +290,7 @@ const AddressPage: React.FC = () => {
               {isAuthError && (
                 <button
                   type="button"
-                  onClick={handleAuthRefresh}
+                  onClick={handleForceRefresh}
                   className="inline-flex items-center rounded-md border border-transparent bg-red-600 px-3 py-2 text-sm font-medium leading-4 text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                 >
                   <div className="mr-2 h-4 w-4" />
@@ -603,7 +619,32 @@ const AddressPage: React.FC = () => {
       {loading && (
         <div className="text-center py-12">
           <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-green-600 border-r-transparent" />
-          <p className="mt-4 text-gray-600 dark:text-gray-400">Loading your addresses...</p>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">
+            {loadingTimeout ? "Loading is taking longer than expected..." : "Loading your addresses..."}
+          </p>
+          
+          {loadingTimeout && (
+            <button
+              onClick={handleForceRefresh}
+              className="mt-4 inline-flex items-center px-3 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700"
+            >
+              Retry Loading
+            </button>
+          )}
+          
+          {loadingTimeout && (
+            <div className="mt-4">
+              <p className="text-sm text-yellow-600 dark:text-yellow-400">
+                You can also add a new address while we're trying to load your saved ones.
+              </p>
+              <button
+                onClick={() => setIsAddingAddress(true)}
+                className="mt-2 inline-flex items-center px-3 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700"
+              >
+                Add New Address
+              </button>
+            </div>
+          )}
         </div>
       )}
       

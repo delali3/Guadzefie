@@ -92,7 +92,6 @@ const App: React.FC = () => {
   const [session, setSession] = useState<Session>(null);
   const [_userRole, setUserRole] = useState<UserRole>(null);
   const [loading, setLoading] = useState(true);
-  const [dbMigrated, ] = useState(false);
   
   // Fix dark mode initialization
   const [darkMode, setDarkMode] = useState<boolean>(() => {
@@ -231,7 +230,7 @@ const App: React.FC = () => {
     }
   }, []);
 
-  if (loading || !dbMigrated) {
+  if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
