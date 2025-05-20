@@ -11,7 +11,6 @@ import {
   ChevronRight,
   Eye,
   AlertCircle,
-  Tag,
   Loader
 } from 'lucide-react';
 
