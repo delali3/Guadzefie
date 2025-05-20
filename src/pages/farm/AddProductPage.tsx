@@ -15,10 +15,7 @@ import {
   Scale,
   Upload,
   Check,
-  X,
-  ImagePlus,
-  Trash2,
-  Loader2
+  X
 } from 'lucide-react';
 
 interface Category {
@@ -330,7 +327,6 @@ const AddProductPage: React.FC = () => {
       };
       
       let product = null;
-      let productError = null;
       
       // Try using bypassRLS first
       try {

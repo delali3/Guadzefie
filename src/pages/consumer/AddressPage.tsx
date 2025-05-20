@@ -39,14 +39,14 @@ interface ShippingAddress {
 interface NewShippingAddress {
   first_name: string;
   last_name: string;
-  address_line1: string;
-  address_line2: string;
+  address: string;
+  address_line2?: string;
   city: string;
   state: string;
   postal_code: string;
   country: string;
   phone: string;
-  email: string;
+  email?: string;
   is_default: boolean;
 }
 
@@ -70,7 +70,7 @@ const AddressPage: React.FC = () => {
   const [formData, setFormData] = useState<NewShippingAddress>({
     first_name: '',
     last_name: '',
-    address_line1: '',
+    address: '',
     address_line2: '',
     city: '',
     state: '',
@@ -112,7 +112,7 @@ const AddressPage: React.FC = () => {
     setFormData({
       first_name: '',
       last_name: '',
-      address_line1: '',
+      address: '',
       address_line2: '',
       city: '',
       state: '',
@@ -128,7 +128,7 @@ const AddressPage: React.FC = () => {
     e.preventDefault();
     
     // Validate form
-    if (!formData.first_name || !formData.last_name || !formData.address_line1 || 
+    if (!formData.first_name || !formData.last_name || !formData.address || 
         !formData.city || !formData.state || !formData.postal_code || !formData.country) {
       toast.error('Please fill in all required fields');
       return;
@@ -159,7 +159,7 @@ const AddressPage: React.FC = () => {
     if (isEditingAddress === null) return;
     
     // Validate form
-    if (!formData.first_name || !formData.last_name || !formData.address_line1 || 
+    if (!formData.first_name || !formData.last_name || !formData.address || 
         !formData.city || !formData.state || !formData.postal_code || !formData.country) {
       toast.error('Please fill in all required fields');
       return;
@@ -183,7 +183,7 @@ const AddressPage: React.FC = () => {
     setFormData({
       first_name: address.first_name,
       last_name: address.last_name,
-      address_line1: address.address_line1,
+      address: address.address_line1,
       address_line2: address.address_line2 || '',
       city: address.city,
       state: address.state,
@@ -409,14 +409,14 @@ const AddressPage: React.FC = () => {
       </div>
       
       <div className="mb-4">
-        <label htmlFor="address_line1" className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+        <label htmlFor="address" className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
           Street Address
         </label>
         <input
-          id="address_line1"
+          id="address"
           type="text"
-          name="address_line1"
-          value={formData.address_line1}
+          name="address"
+          value={formData.address}
           onChange={handleInputChange}
           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
           required

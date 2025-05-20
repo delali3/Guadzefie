@@ -157,7 +157,7 @@ export function getSupabaseWithAuth() {
 }
 
 // Function to help bypass RLS with custom auth
-export async function bypassRLS(tableName: string, operation: 'select' | 'insert' | 'update' | 'delete', options: any = {}) {
+export async function bypassRLS(tableName: string, operation: 'select' | 'insert' | 'update' | 'delete') {
   // Add a special header to bypass RLS
   const customHeaders = {
     ...getAuthHeaders(),

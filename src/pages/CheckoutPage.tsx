@@ -146,7 +146,7 @@ const CheckoutPage: React.FC = () => {
           const userId = user.id;
           
           // First try to fetch from the profiles table
-          let { data: profileData, error: profileError } = await supabase
+          let { data: profileData } = await supabase
             .from('profiles')
             .select('first_name, last_name, phone, address')
             .eq('id', userId)

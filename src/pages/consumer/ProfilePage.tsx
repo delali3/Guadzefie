@@ -404,7 +404,7 @@ const ProfilePage: React.FC = () => {
         }
         
         // Check if profiles table exists and create a profile entry if needed
-        const { data: profileExists, error: profileCheckError } = await supabase
+        const { error: profileCheckError } = await supabase
           .from('profiles')
           .select('id')
           .eq('id', user.id)

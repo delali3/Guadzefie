@@ -8,7 +8,6 @@ import {
   AlertTriangle,
   X,
   Check,
-  MoreVertical,
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
@@ -111,7 +110,7 @@ const CategoryManagementPage: React.FC = () => {
     setLoading(true);
     
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('categories')
         .insert([
           {

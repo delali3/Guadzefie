@@ -136,7 +136,7 @@ const ProductListPage: React.FC = () => {
             dimensions,
             tags,
             harvest_date,
-            categories!products_category_id_fkey(name)
+            categories:category_id(name)
           `, { count: 'exact' })
           .eq('farmer_id', user.id)
           .eq('is_active', true); // Only show active products
@@ -165,12 +165,19 @@ const ProductListPage: React.FC = () => {
         if (productsError) throw productsError;
 
         // Process the data to get the category name from the nested object
-        const processedProducts = data?.map(product => ({
-          ...product,
-          category: {
-            name: product.categories?.name || 'Uncategorized'
-          }
-        })) || [];
+        const processedProducts = data?.map(product => {
+          const categoryName = product.categories ? 
+            (typeof product.categories === 'object' && product.categories !== null ? 
+              (product.categories as any).name : 'Uncategorized') 
+            : 'Uncategorized';
+            
+          return {
+            ...product,
+            category: {
+              name: categoryName
+            }
+          };
+        }) || [];
 
         setProducts(processedProducts);
         setTotalProducts(count || 0);
