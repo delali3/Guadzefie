@@ -5,8 +5,6 @@ import { ProductProvider } from './contexts/ProductContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { ShippingAddressProvider } from './contexts/ShippingAddressContext';
 import { PaymentMethodProvider } from './contexts/PaymentMethodContext';
-import { migrateDatabase } from './lib/migrateDB';
-import toast from 'react-hot-toast';
 import { HelmetProvider } from 'react-helmet-async';
 
 // Layouts
@@ -94,7 +92,7 @@ const App: React.FC = () => {
   const [session, setSession] = useState<Session>(null);
   const [_userRole, setUserRole] = useState<UserRole>(null);
   const [loading, setLoading] = useState(true);
-  const [dbMigrated, setDbMigrated] = useState(false);
+  const [dbMigrated, ] = useState(false);
   
   // Fix dark mode initialization
   const [darkMode, setDarkMode] = useState<boolean>(() => {
@@ -231,41 +229,6 @@ const App: React.FC = () => {
       
       console.log('Navigation debugging enabled. Use window.debugNavigation to access tools.');
     }
-  }, []);
-
-  // Run migrations on app start (only in production or if explicitly enabled)
-  useEffect(() => {
-    const runMigrations = async () => {
-      try {
-        // Check if migrations should run
-        const shouldRunMigrations = localStorage.getItem('enable_auto_migrations') === 'true' || 
-                                    process.env.NODE_ENV === 'production';
-        
-        if (shouldRunMigrations) {
-          console.log('Running database migrations...');
-          const result = await migrateDatabase();
-          
-          if (result.success) {
-            console.log('Database migrations completed successfully');
-            setDbMigrated(true);
-          } else {
-            console.error('Database migrations failed:', result.message);
-            // Only show toast if user is logged in to avoid confusion
-            if (localStorage.getItem('user')) {
-              toast.error('Database setup incomplete. Some features may not work properly.');
-            }
-          }
-        } else {
-          console.log('Skipping automatic migrations (development mode)');
-          setDbMigrated(true);
-        }
-      } catch (error) {
-        console.error('Error running migrations:', error);
-        setDbMigrated(true); // Still mark as complete to not block the app
-      }
-    };
-    
-    runMigrations();
   }, []);
 
   if (loading || !dbMigrated) {

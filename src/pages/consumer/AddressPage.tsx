@@ -1,15 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useShippingAddresses } from '../../contexts/ShippingAddressContext';
-// import ShippingAddressManager from '../../components/shipping/ShippingAddressManager';
 import { 
   ChevronRight, 
   Star, 
   MapPin, 
   Check,
-  Loader2,
   Info,
-  Database
 } from 'lucide-react';
 import { 
   Plus, 
@@ -18,7 +15,6 @@ import {
   X
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { ensureShippingAddressesTable } from '../../lib/migrations';
 
 // Interface definitions
 interface ShippingAddress {
@@ -65,8 +61,6 @@ const AddressPage: React.FC = () => {
 
   const [isAddingAddress, setIsAddingAddress] = useState(false);
   const [isEditingAddress, setIsEditingAddress] = useState<number | string | null>(null);
-  const [isMigratingDb, setIsMigratingDb] = useState(false);
-  const [migrationResult, setMigrationResult] = useState<{success: boolean; message: string} | null>(null);
   const [formData, setFormData] = useState<NewShippingAddress>({
     first_name: '',
     last_name: '',
@@ -221,32 +215,6 @@ const AddressPage: React.FC = () => {
     }
   };
 
-  // Run database migration
-  const runMigration = async () => {
-    setIsMigratingDb(true);
-    
-    try {
-      const result = await ensureShippingAddressesTable();
-      setMigrationResult(result);
-      
-      if (result.success) {
-        // Refresh session and fetch addresses again
-        await refreshSession();
-        await fetchAddresses();
-        toast.success('Database setup completed successfully');
-      } else {
-        toast.error(result.message);
-      }
-    } catch (error: any) {
-      setMigrationResult({
-        success: false,
-        message: `Migration error: ${error.message}`
-      });
-      toast.error(`Failed to set up database: ${error.message}`);
-    } finally {
-      setIsMigratingDb(false);
-    }
-  };
 
   // Check if the error message indicates a missing table
   const isTableNotExistError = (errorMessage: string | null) => {
@@ -298,8 +266,6 @@ const AddressPage: React.FC = () => {
       error.toLowerCase().includes('sign in') ||
       error.toLowerCase().includes('jwt')
     );
-      
-    const isDbError = error && isTableNotExistError(error);
     
     return (
       <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6">
@@ -313,26 +279,6 @@ const AddressPage: React.FC = () => {
               <p>{error}</p>
             </div>
             <div className="mt-4">
-              {isDbError && (
-                <button
-                  type="button"
-                  onClick={runMigration}
-                  disabled={isMigratingDb}
-                  className="inline-flex items-center rounded-md border border-transparent bg-red-600 px-3 py-2 text-sm font-medium leading-4 text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 mr-3"
-                >
-                  {isMigratingDb ? (
-                    <>
-                      <Loader2 className="animate-spin mr-2 h-4 w-4" />
-                      Setting Up...
-                    </>
-                  ) : (
-                    <>
-                      <Database className="mr-2 h-4 w-4" />
-                      Set Up Database
-                    </>
-                  )}
-                </button>
-              )}
               
               {isAuthError && (
                 <button
@@ -645,19 +591,6 @@ const AddressPage: React.FC = () => {
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Delivery Addresses</h1>
         
         <div className="flex space-x-2">
-          {/* Migration button - show if table doesn't exist */}
-          {isTableNotExistError(error) && (
-            <button
-              onClick={runMigration}
-              disabled={isMigratingDb}
-              className={`inline-flex items-center px-3 py-2 border border-blue-600 rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 ${isMigratingDb ? 'opacity-50 cursor-not-allowed' : ''}`}
-              aria-label="Run database migration"
-            >
-              <Database size={18} className="mr-1" />
-              {isMigratingDb ? 'Running Migration...' : 'Create Address Table'}
-            </button>
-          )}
-          
           {!isAddingAddress && (
             <button
               onClick={() => setIsAddingAddress(true)}
@@ -671,12 +604,6 @@ const AddressPage: React.FC = () => {
         </div>
       </div>
       
-      {/* Migration result message */}
-      {migrationResult && (
-        <div className={`mb-4 p-4 rounded-md ${migrationResult.success ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'}`}>
-          {migrationResult.message}
-        </div>
-      )}
       
       {/* Error message with better diagnostics */}
       {error && renderError()}

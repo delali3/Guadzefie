@@ -1,5 +1,3 @@
-import { supabase } from './supabase';
-
 // Register the RPC functions with Supabase
 export const registerRpcFunctions = async () => {
   // We can't directly set functions on the client

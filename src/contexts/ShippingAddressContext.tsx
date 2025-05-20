@@ -1,7 +1,6 @@
 // src/contexts/ShippingAddressContext.tsx
 import React, { createContext, useContext, useReducer, useEffect, useCallback, useState } from 'react';
 import { supabase, getCurrentUser, bypassRLS } from '../lib/supabase';
-import { ensureShippingAddressesTable, checkShippingAddressesTable } from '../lib/migrations';
 import toast from 'react-hot-toast';
 
 // Types
@@ -194,40 +193,8 @@ const ShippingAddressContext = createContext<ShippingAddressContextType | undefi
 export const ShippingAddressProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(shippingAddressReducer, initialState);
   const [fetchCount, setFetchCount] = useState(0);
-  const [tableChecked, setTableChecked] = useState(false);
-
-  // Ensure the shipping_addresses table exists
-  const ensureTable = useCallback(async () => {
-    if (tableChecked) return;
-    
-    try {
-      // Check if the table exists first
-      const tableExists = await checkShippingAddressesTable();
-      
-      if (!tableExists) {
-        console.log('Shipping addresses table does not exist, creating...');
-        const result = await ensureShippingAddressesTable();
-        
-        if (!result.success) {
-          console.error('Failed to create shipping addresses table:', result.message);
-        } else {
-          console.log('Shipping addresses table created successfully');
-        }
-      } else {
-        console.log('Shipping addresses table already exists');
-      }
-    } catch (error) {
-      console.error('Error ensuring shipping addresses table:', error);
-    } finally {
-      setTableChecked(true);
-    }
-  }, [tableChecked]);
-
   // Fetch all shipping addresses for the current user
   const fetchAddresses = useCallback(async () => {
-    // First ensure the table exists
-    await ensureTable();
-    
     // Don't try to fetch if we've already tried a few times
     if (fetchCount > 3) {
       console.log("Too many fetch attempts, stopping.");
@@ -307,21 +274,7 @@ export const ShippingAddressProvider: React.FC<{ children: React.ReactNode }> = 
         .order('created_at', { ascending: false });
       
       if (error) {
-        // Check if it's a table existence error
-        if (error.message.includes('does not exist')) {
-          // Try to create the table
-          const tableResult = await ensureShippingAddressesTable();
-          if (tableResult.success) {
-            console.log('Created shipping_addresses table, retrying fetch');
-            setFetchCount(c => c + 1);
-            // Don't update state here, just exit and let the useEffect trigger a retry
-            dispatch({ type: 'SET_LOADING', payload: false });
-            return;
-          } else {
-            throw new Error(`Could not create shipping_addresses table: ${tableResult.message}`);
-          }
-        }
-        
+                
         // Check if it's an auth error
         if (error.message.includes('JWT expired') || 
             error.message.includes('JWTExpired') ||
@@ -362,7 +315,7 @@ export const ShippingAddressProvider: React.FC<{ children: React.ReactNode }> = 
       dispatch({ type: 'SET_INITIALIZED', payload: true });
       setFetchCount(c => c + 1);
     }
-  }, [state.loading, state.initialized, fetchCount, ensureTable]);
+  }, [state.loading, state.initialized, fetchCount]);
 
   // Add a new shipping address
   const addAddress = useCallback(async (address: NewShippingAddress): Promise<ShippingAddress | null> => {
@@ -370,8 +323,6 @@ export const ShippingAddressProvider: React.FC<{ children: React.ReactNode }> = 
     dispatch({ type: 'SET_ERROR', payload: null });
     
     try {
-      // First ensure the table exists
-      await ensureTable();
       
       // Get current user from our utility function
       const currentUser = getCurrentUser();
@@ -429,7 +380,7 @@ export const ShippingAddressProvider: React.FC<{ children: React.ReactNode }> = 
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
-  }, [state.addresses.length, ensureTable]);
+  }, [state.addresses.length]);
 
   // Update an existing shipping address
   const updateAddress = useCallback(async (id: number | string, addressUpdate: Partial<NewShippingAddress>): Promise<ShippingAddress | null> => {

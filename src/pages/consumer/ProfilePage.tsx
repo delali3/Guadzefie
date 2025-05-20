@@ -7,19 +7,14 @@ import {
   User, 
   Camera, 
   Loader2, 
-  Save,
   AlertCircle,
   CheckCircle,
-  Briefcase,
-  Globe,
-  Shield,
   Lock,
   Info,
   Eye,
   EyeOff
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import ProfileTableSetup from '../../components/profile/ProfileTableSetup';
 
 interface ProfileForm {
   first_name: string;
@@ -850,12 +845,6 @@ const ProfilePage: React.FC = () => {
     }
   };
 
-  const handleProfileTableSetupSuccess = () => {
-    setNeedsProfileTable(false);
-    fetchProfile();
-    toast.success('Profile table created successfully');
-  };
-  
   // Handle password change
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1568,112 +1557,6 @@ const ProfilePage: React.FC = () => {
               </div>
             )}
             
-            {/* Migration setup message */}
-            {migrationStatus.show && migrationStatus.message && (
-              <div className={`mb-6 p-4 border rounded-lg flex items-center gap-2 ${
-                migrationStatus.success 
-                  ? 'border-green-200 bg-green-50 dark:bg-green-900/20 dark:border-green-800 text-green-700 dark:text-green-400' 
-                  : 'border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800 text-red-700 dark:text-red-400'
-              }`}>
-                {migrationStatus.success ? (
-                  <CheckCircle className="w-5 h-5" />
-                ) : (
-                  <AlertCircle className="w-5 h-5" />
-                )}
-                <span>{migrationStatus.message}</span>
-              </div>
-            )}
-            
-            {/* Profile table setup component */}
-            {needsProfileTable ? (
-              <ProfileTableSetup onSuccess={handleProfileTableSetupSuccess} />
-            ) : (
-              <>
-                {/* Tabs */}
-                <div className="border-b border-gray-200 dark:border-gray-700 mb-8">
-                  <nav className="-mb-px flex space-x-8">
-                    <button
-                      onClick={() => setActiveTab('basic')}
-                      className={`whitespace-nowrap pb-4 px-3 border-b-2 font-medium text-base ${
-                        activeTab === 'basic'
-                          ? 'border-green-500 text-green-600'
-                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                      }`}
-                    >
-                      <User className="w-5 h-5 inline-block mr-2" />
-                      Basic Information
-                    </button>
-                    
-                    <button
-                      onClick={() => setActiveTab('additional')}
-                      className={`whitespace-nowrap pb-4 px-3 border-b-2 font-medium text-base ${
-                        activeTab === 'additional'
-                          ? 'border-green-500 text-green-600'
-                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                      }`}
-                    >
-                      <Briefcase className="w-5 h-5 inline-block mr-2" />
-                      Additional Info
-                    </button>
-                    
-                    <button
-                      onClick={() => setActiveTab('social')}
-                      className={`whitespace-nowrap pb-4 px-3 border-b-2 font-medium text-base ${
-                        activeTab === 'social'
-                          ? 'border-green-500 text-green-600'
-                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                      }`}
-                    >
-                      <Globe className="w-5 h-5 inline-block mr-2" />
-                      Social & Privacy
-                    </button>
-                    
-                    <button
-                      onClick={() => setActiveTab('security')}
-                      className={`whitespace-nowrap pb-4 px-3 border-b-2 font-medium text-base ${
-                        activeTab === 'security'
-                          ? 'border-green-500 text-green-600'
-                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                      }`}
-                    >
-                      <Shield className="w-5 h-5 inline-block mr-2" />
-                      Security
-                    </button>
-                  </nav>
-                </div>
-                
-                {/* Tab Content */}
-                {activeTab === 'security' ? (
-                  renderSecurityTab()
-                ) : (
-                  <form onSubmit={handleSubmit}>
-                    {renderTabContent()}
-                    
-                    {activeTab !== 'security' && (
-                      <div className="mt-8 pt-5 border-t border-gray-200 dark:border-gray-700 flex justify-end">
-                        <button
-                          type="submit"
-                          disabled={saving}
-                          className="inline-flex items-center px-5 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {saving ? (
-                            <>
-                              <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                              Saving...
-                            </>
-                          ) : (
-                            <>
-                              <Save className="w-5 h-5 mr-2" />
-                              Save Changes
-                            </>
-                          )}
-                        </button>
-                      </div>
-                    )}
-                  </form>
-                )}
-              </>
-            )}
           </div>
         </div>
       )}

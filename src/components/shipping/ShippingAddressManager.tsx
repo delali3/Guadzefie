@@ -75,7 +75,7 @@ const ShippingAddressManager: React.FC<ShippingAddressManagerProps> = ({
         if (Object.keys(initialAddress).length > 0 && !isAddingNew && !isEditing) {
             // Handle mapping between address_line1 and address
             const mappedInitialAddress = {...initialAddress};
-            if (initialAddress.address_line1) {
+            if ('address_line1' in initialAddress && !('address' in initialAddress)) {
                 mappedInitialAddress.address = initialAddress.address_line1;
                 delete mappedInitialAddress.address_line1;
             }
@@ -175,7 +175,7 @@ const ShippingAddressManager: React.FC<ShippingAddressManagerProps> = ({
         // Map address_line1 to address if needed
         const addressData = {...address};
         if ('address_line1' in address && !('address' in address)) {
-            addressData.address = address.address_line1;
+            addressData.address = (address as any).address_line1;
         }
         
         setFormData({

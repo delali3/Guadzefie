@@ -530,12 +530,7 @@ const CheckoutPage: React.FC = () => {
       return userId;
     }
     
-    // If it's a numeric ID, create a deterministic UUID v5 from it
-    // Use a namespace UUID (this is arbitrary but consistent)
-    const namespace = '6ba7b810-9dad-11d1-80b4-00c04fd430c8';
     
-    // For simplicity, we'll just pad and format it to look like a UUID
-    // This is a workaround - in production, you might want to use a proper UUID generation library
     const idStr = String(userId).padStart(8, '0');
     const formattedUuid = `${idStr.slice(0, 8)}-0000-0000-0000-000000000000`;
     
