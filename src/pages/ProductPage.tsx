@@ -26,6 +26,7 @@ interface FarmProduct {
   price: number;
   description: string;
   image_url: string;
+  additional_images?: string[];
   category_id: number;
   inventory_count: number;
   featured: boolean;
@@ -59,6 +60,32 @@ interface ProductReview {
     avatar_url: string | null;
   };
 }
+
+// Image utility functions
+const getPlaceholderImage = (
+  category: string = 'farm-product',
+  seed: string | number = Math.random().toString(36).substring(7),
+  width: number = 800,
+  height: number = 800
+): string => {
+  // Sanitize category for URL
+  const sanitizedCategory = category.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+  
+  // Create a unique seed for the image
+  const uniqueSeed = `seed-${seed}`;
+  
+  return `https://source.unsplash.com/${width}x${height}/?${sanitizedCategory}&${uniqueSeed}`;
+};
+
+const handleImageError = (
+  event: React.SyntheticEvent<HTMLImageElement, Event>,
+  category: string = 'farm-product',
+  seed: string | number = Math.random().toString(36).substring(7)
+): void => {
+  const target = event.target as HTMLImageElement;
+  target.onerror = null; // Prevent infinite loop
+  target.src = getPlaceholderImage(category, seed);
+};
 
 const ProductPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -255,6 +282,34 @@ const ProductPage: React.FC = () => {
     return JSON.stringify(schema);
   };
 
+  // Function to get product images with fallbacks
+  const getProductImages = (product: FarmProduct | null): string[] => {
+    if (!product) return [];
+    
+    const images = [];
+    
+    // Add the main image if it exists
+    if (product.image_url) {
+      images.push(product.image_url);
+    }
+    
+    // Add additional images if they exist
+    if (product.additional_images && Array.isArray(product.additional_images)) {
+      images.push(...product.additional_images);
+    }
+    
+    // If we have less than 4 images, add placeholder images based on product name
+    const defaultImageCategories = ['vegetables', 'fruits', 'farm', 'produce', 'harvest'];
+    
+    while (images.length < 4) {
+      const category: string = defaultImageCategories[images.length % defaultImageCategories.length];
+      const seed: string = `${product.name.split(' ')[0]}-${images.length}`;
+      images.push(getPlaceholderImage(category, seed));
+    }
+    
+    return images;
+  };
+
   // Loading state
   if (isLoading) {
     return (
@@ -287,13 +342,8 @@ const ProductPage: React.FC = () => {
     ? product.price * (1 - (product.discount_percentage / 100))
     : null;
 
-  // Generate an array of 4 product images (in a real app, you would use actual product images)
-  const productImages = [
-    product.image_url || `https://source.unsplash.com/random/800x800/?farm+${product.id}`,
-    `https://source.unsplash.com/random/800x800/?ghana+${product.name.split(' ')[0]}`,
-    `https://source.unsplash.com/random/800x800/?agriculture+${product.name.split(' ').slice(-1)[0]}`,
-    `https://source.unsplash.com/random/800x800/?harvest`
-  ];
+  // Generate product images with fallbacks
+  const productImages = getProductImages(product);
 
   // Calculate average rating
   const avgRating = product.reviews && product.reviews.length > 0
@@ -344,11 +394,16 @@ const ProductPage: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
           {/* Image Gallery */}
           <div className="space-y-4">
-            <div className="aspect-w-1 aspect-h-1 w-full overflow-hidden rounded-lg bg-white">
+            <div className="aspect-w-1 aspect-h-1 w-full overflow-hidden rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
               <img
                 src={productImages[selectedImage]}
                 alt={product.name}
                 className="w-full h-full object-center object-cover"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.onerror = null;
+                  target.src = getPlaceholderImage(product.categories?.name || 'farm-product', `${product.id}-main`);
+                }}
               />
             </div>
             <div className="grid grid-cols-4 gap-4">
@@ -356,15 +411,21 @@ const ProductPage: React.FC = () => {
                 <button
                   key={index}
                   onClick={() => setSelectedImage(index)}
-                  className={`aspect-w-1 aspect-h-1 rounded overflow-hidden border-2 ${selectedImage === index
-                    ? 'border-green-500 dark:border-green-400'
-                    : 'border-transparent'
-                    }`}
+                  className={`aspect-w-1 aspect-h-1 rounded overflow-hidden border-2 ${
+                    selectedImage === index
+                      ? 'border-green-500 dark:border-green-400'
+                      : 'border-gray-200 dark:border-gray-700'
+                  }`}
                 >
                   <img
                     src={image}
                     alt={`${product.name} - view ${index + 1}`}
                     className="w-full h-full object-center object-cover"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.onerror = null;
+                      target.src = getPlaceholderImage(product.categories?.name || 'produce', `${product.id}-${index}`);
+                    }}
                   />
                 </button>
               ))}
@@ -872,9 +933,10 @@ const ProductPage: React.FC = () => {
                 <div key={relatedProduct.id} className="group relative bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-300">
                   <div className="aspect-w-1 aspect-h-1 bg-gray-200 dark:bg-gray-700 w-full overflow-hidden xl:aspect-w-7 xl:aspect-h-8">
                     <img
-                      src={relatedProduct.image_url || `https://source.unsplash.com/random/300x300/?farm+${relatedProduct.id}`}
+                      src={relatedProduct.image_url || getPlaceholderImage('farm-product', relatedProduct.id)}
                       alt={relatedProduct.name}
                       className="w-full h-full object-center object-cover group-hover:opacity-75"
+                      onError={(e) => handleImageError(e, relatedProduct.categories?.name || 'produce', relatedProduct.id)}
                     />
                     {relatedProduct.inventory_count <= 5 && relatedProduct.inventory_count > 0 && (
                       <div className="absolute top-2 right-2 bg-amber-500 text-white text-xs font-bold px-2 py-1 rounded-full">
@@ -919,9 +981,10 @@ const ProductPage: React.FC = () => {
               <div key={i} className="group relative bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-300">
                 <div className="aspect-w-1 aspect-h-1 bg-gray-200 dark:bg-gray-700 w-full overflow-hidden">
                   <img
-                    src={`https://img.freepik.com/free-photo/tegallalang-bali-near-cultural-village-ubud-is-area-known-as-tegallalang-that-boasts-most-dramatic-terraced-rice-fields-all-bali_231208-9914.jpg?t=st=1743871766~exp=1743875366~hmac=180aa16264de75dc8865dd8455e97feba89db7118daf0468a8be5d5623f57f7c&w=740`}
+                    src={getPlaceholderImage('seasonal-produce', `seasonal-${i}`, 300, 300)}
                     alt={`Seasonal product ${i + 1}`}
                     className="w-full h-full object-center object-cover group-hover:opacity-75"
+                    onError={(e) => handleImageError(e, 'farm-product', `seasonal-backup-${i}`)}
                   />
                 </div>
                 <div className="p-3">
