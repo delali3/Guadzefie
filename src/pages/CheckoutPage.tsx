@@ -110,14 +110,14 @@ const CheckoutPage: React.FC = () => {
   // Payment methods
   const paymentMethods: PaymentMethod[] = [
     {
-      id: 'credit-card',
-      name: 'Credit / Debit Card',
-      icon: <CreditCard className="w-5 h-5" />
-    },
-    {
       id: 'paystack',
       name: 'Paystack',
       icon: <Lock className="w-5 h-5" />
+    },
+    {
+      id: 'credit-card',
+      name: 'Credit / Debit Card',
+      icon: <CreditCard className="w-5 h-5" />
     },
     {
       id: 'paypal',
