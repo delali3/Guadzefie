@@ -66,6 +66,7 @@ import AddressPage from './pages/consumer/AddressPage';
 import SubscriptionPage from './pages/consumer/SubscriptionPage';
 import ProfilePage from './pages/consumer/ProfilePage';
 import ConsumerSettingsPage from './pages/consumer/SettingsPage';
+import EditProductPage from './pages/farm/EditProductPage';
 
 // Declare the debug navigation interface
 interface DebugNavigation {
@@ -297,7 +298,7 @@ const App: React.FC = () => {
                       <Route path="" element={<Navigate to="/farm/dashboard" replace />} />
                       <Route path="products" element={<FarmProductListPage />} />
                       <Route path="products/add" element={<AddProductPage />} />
-                      <Route path="products/edit/:id" element={<AddProductPage />} />
+                      <Route path="products/edit/:id" element={<EditProductPage />} />
                       <Route path="orders" element={<FarmOrdersPage />} />
                       <Route path="orders/:id" element={<FarmOrderDetailsPage />} />
                       <Route path="deliveries" element={<FarmDeliveriesPage />} />

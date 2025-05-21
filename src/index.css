@@ -34,6 +34,26 @@ button[type="submit"],
   min-height: 2.75rem !important; /* Ensure minimum height */
 }
 
+input, textarea, select {
+  padding-left: 1rem !important; /* Ensure consistent left padding */
+}
+
+/* Placeholder styling - move to the right */
+::placeholder {
+  padding-left: 0.8rem; /* Add more padding inside placeholder text */
+  opacity: 0.7; /* Make it more visible */
+  color: #6B7280; /* Consistent placeholder color */
+  font-style: italic; /* Make placeholders italic */
+  transition: opacity 0.2s ease; /* Smooth transition on focus */
+}
+
+/* More visible on focus */
+input:focus::placeholder, 
+textarea:focus::placeholder,
+select:focus::placeholder {
+  opacity: 0.5; /* Dim the placeholder when field is focused */
+}
+
 /* Make search boxes and smaller inputs not too large */
 input[type="search"],
 .search-input {

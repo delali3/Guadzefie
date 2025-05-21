@@ -332,8 +332,11 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
         try {
             console.log("Fetching products with options:", options);
 
-            // Start with a basic query
-            let query = supabase.from('products').select('*');
+            // Start with a basic query - use specific foreign key relationship
+            let query = supabase.from('products').select(`
+                *,
+                categories!products_category_id_fkey(id, name, slug)
+            `);
 
             // Apply filters
             if (options.category_id) {

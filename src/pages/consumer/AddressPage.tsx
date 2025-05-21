@@ -339,9 +339,10 @@ const AddressPage: React.FC = () => {
             name="first_name"
             value={formData.first_name}
             onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
+            className="w-full px-5 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
             required
             aria-required="true"
+            placeholder="Enter first name"
           />
         </div>
         <div>
@@ -354,9 +355,10 @@ const AddressPage: React.FC = () => {
             name="last_name"
             value={formData.last_name}
             onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
+            className="w-full px-5 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
             required
             aria-required="true"
+            placeholder="Enter last name"
           />
         </div>
       </div>
@@ -371,9 +373,10 @@ const AddressPage: React.FC = () => {
           name="address"
           value={formData.address}
           onChange={handleInputChange}
-          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
+          className="w-full px-5 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
           required
           aria-required="true"
+          placeholder="Enter street address"
         />
       </div>
       
@@ -387,7 +390,8 @@ const AddressPage: React.FC = () => {
           name="address_line2"
           value={formData.address_line2}
           onChange={handleInputChange}
-          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
+          className="w-full px-5 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
+          placeholder="Apartment, suite, unit, building, floor, etc."
         />
       </div>
       
@@ -402,9 +406,10 @@ const AddressPage: React.FC = () => {
             name="city"
             value={formData.city}
             onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
+            className="w-full px-5 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
             required
             aria-required="true"
+            placeholder="Enter city"
           />
         </div>
         <div>
@@ -417,9 +422,10 @@ const AddressPage: React.FC = () => {
             name="state"
             value={formData.state}
             onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
+            className="w-full px-5 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
             required
             aria-required="true"
+            placeholder="Enter state or region"
           />
         </div>
       </div>
@@ -435,9 +441,10 @@ const AddressPage: React.FC = () => {
             name="postal_code"
             value={formData.postal_code}
             onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
+            className="w-full px-5 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
             required
             aria-required="true"
+            placeholder="Enter postal code"
           />
         </div>
         <div>
@@ -449,7 +456,7 @@ const AddressPage: React.FC = () => {
             name="country"
             value={formData.country}
             onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
+            className="w-full px-5 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
             required
             aria-required="true"
           >
@@ -473,9 +480,10 @@ const AddressPage: React.FC = () => {
           name="phone"
           value={formData.phone}
           onChange={handleInputChange}
-          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
+          className="w-full px-5 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
           required
           aria-required="true"
+          placeholder="Enter phone number"
         />
       </div>
       
@@ -489,7 +497,8 @@ const AddressPage: React.FC = () => {
           name="email"
           value={formData.email}
           onChange={handleInputChange}
-          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
+          className="w-full px-5 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
+          placeholder="Enter email address"
         />
       </div>
       

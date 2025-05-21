@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
-import { 
-  Plus, 
-  Edit2, 
-  Trash2, 
-  Search, 
-  Filter, 
-  ChevronLeft, 
+import {
+  Plus,
+  Edit2,
+  Trash2,
+  Search,
+  Filter,
+  ChevronLeft,
   ChevronRight,
   Eye,
   AlertCircle,
@@ -47,33 +47,33 @@ const ProductListPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<number | null>(null);
-  const [categories, setCategories] = useState<{id: number, name: string}[]>([]);
+  const [categories, setCategories] = useState<{ id: number, name: string }[]>([]);
   const [totalProducts, setTotalProducts] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const productsPerPage = 10;
 
   // Check authentication status first using custom user storage  
-  useEffect(() => {    
-    const checkAuth = async () => {      
-      try {        
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
         // Get current user from local storage        
-        const userData = localStorage.getItem('user');                
-        
-        if (!userData) {          
-          throw new Error('You must be logged in to view your products');        
-        }                
-        
+        const userData = localStorage.getItem('user');
+
+        if (!userData) {
+          throw new Error('You must be logged in to view your products');
+        }
+
         const user = JSON.parse(userData);
 
         setIsAuthenticated(!!user.id);
-      } catch (error) {        
-        console.error('Error checking authentication:', error);        
-        setIsAuthenticated(false);      
-      }    
-    };    
-    
-    checkAuth();  
+      } catch (error) {
+        console.error('Error checking authentication:', error);
+        setIsAuthenticated(false);
+      }
+    };
+
+    checkAuth();
   }, []);
 
   // Fetch user's products
@@ -83,12 +83,15 @@ const ProductListPage: React.FC = () => {
       // Still checking auth status
       return;
     }
-    
+
     if (isAuthenticated === false) {
       setLoading(false);
       setError('You must be logged in to view your products');
       return;
     }
+
+    // Use this query after running the migration SQL
+    // This works with the new schema using category_id
 
     const fetchProducts = async () => {
       setLoading(true);
@@ -97,49 +100,49 @@ const ProductListPage: React.FC = () => {
       try {
         // Get current user from local storage
         const userData = localStorage.getItem('user');
-        
+
         if (!userData) {
           throw new Error('You must be logged in to view your products');
         }
-        
+
         const user = JSON.parse(userData);
 
         // Fetch categories first
         const { data: categoriesData, error: categoriesError } = await supabase
           .from('categories')
           .select('id, name');
-          
+
         if (categoriesError) throw categoriesError;
         setCategories(categoriesData || []);
 
-        // Build query with columns that actually exist in the database
+        // Clean query using the proper relationship
         let query = supabase
           .from('products')
           .select(`
-            id, 
-            name, 
-            price, 
-            description,
-            image_url, 
-            inventory_count, 
-            sales_count, 
-            created_at,
-            category_id,
-            is_organic,
-            is_active,
-            featured,
-            farming_method,
-            region,
-            rating,
-            sku,
-            weight,
-            dimensions,
-            tags,
-            harvest_date,
-            categories:category_id(name)
-          `, { count: 'exact' })
+        id, 
+        name, 
+        price, 
+        description,
+        image_url, 
+        inventory_count, 
+        sales_count, 
+        created_at,
+        category_id,
+        is_organic,
+        is_active,
+        featured,
+        farming_method,
+        region,
+        rating,
+        sku,
+        weight,
+        dimensions,
+        tags,
+        harvest_date,
+        categories(name)
+      `, { count: 'exact' })
           .eq('farmer_id', user.id)
-          .eq('is_active', true); // Only show active products
+          .eq('is_active', true);
 
         // Apply search filter if available
         if (search) {
@@ -166,11 +169,11 @@ const ProductListPage: React.FC = () => {
 
         // Process the data to get the category name from the nested object
         const processedProducts = data?.map(product => {
-          const categoryName = product.categories ? 
-            (typeof product.categories === 'object' && product.categories !== null ? 
-              (product.categories as any).name : 'Uncategorized') 
+          const categoryName = product.categories ?
+            (typeof product.categories === 'object' && product.categories !== null ?
+              (product.categories as any).name : 'Uncategorized')
             : 'Uncategorized';
-            
+
           return {
             ...product,
             category: {
@@ -203,26 +206,26 @@ const ProductListPage: React.FC = () => {
     setCurrentPage(1); // Reset to first page when filter changes
   };
 
-  const handleDelete = async (id: number) => {    
+  const handleDelete = async (id: number) => {
     if (!window.confirm('Are you sure you want to delete this product?')) return;
-    
-    try {      
+
+    try {
       // Soft delete - update is_active flag to false      
-      const { error } = await supabase        
-        .from('products')        
-        .update({ is_active: false })        
-        .eq('id', id);      
-      
-      if (error) throw error;      
-      
+      const { error } = await supabase
+        .from('products')
+        .update({ is_active: false })
+        .eq('id', id);
+
+      if (error) throw error;
+
       // Update the UI without refetching      
-      setProducts(products.filter(product => product.id !== id));            
-      
-      alert('Product deleted successfully');    
-    } catch (error) {      
-      console.error('Error deleting product:', error);      
-      alert('Failed to delete product');    
-    }  
+      setProducts(products.filter(product => product.id !== id));
+
+      alert('Product deleted successfully');
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      alert('Failed to delete product');
+    }
   };
 
   const totalPages = Math.ceil(totalProducts / productsPerPage);
@@ -270,8 +273,8 @@ const ProductListPage: React.FC = () => {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Farm Products</h1>
           <p className="text-gray-600 dark:text-gray-400">Manage your product listings</p>
         </div>
-        <Link 
-          to="/farm/products/add" 
+        <Link
+          to="/farm/products/add"
           className="mt-3 sm:mt-0 px-4 py-2 bg-green-600 text-white rounded-md flex items-center justify-center hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
         >
           <Plus className="w-4 h-4 mr-2" />
@@ -372,8 +375,8 @@ const ProductListPage: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="h-10 w-10 flex-shrink-0">
-                        <img 
-                          src={product.image_url || `https://via.placeholder.com/50?text=${product.name.charAt(0)}`} 
+                        <img
+                          src={product.image_url || `https://via.placeholder.com/50?text=${product.name.charAt(0)}`}
                           alt={product.name}
                           className="h-10 w-10 rounded-md object-cover"
                         />
@@ -411,12 +414,11 @@ const ProductListPage: React.FC = () => {
                     <div className="text-sm text-gray-900 dark:text-white">{product.sales_count}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span 
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        product.is_active 
-                          ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
+                    <span
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${product.is_active
+                          ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
                           : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                      }`}
+                        }`}
                     >
                       {product.is_active ? 'Active' : 'Inactive'}
                     </span>
@@ -428,21 +430,21 @@ const ProductListPage: React.FC = () => {
                     <div className="flex justify-end space-x-2">
                       <Link
                         to={`/products/${product.id}`}
-                        className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300" 
+                        className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
                         title="View product"
                       >
                         <Eye className="w-5 h-5" />
                       </Link>
                       <Link
                         to={`/farm/products/edit/${product.id}`}
-                        className="text-blue-500 hover:text-blue-700 dark:hover:text-blue-300" 
+                        className="text-blue-500 hover:text-blue-700 dark:hover:text-blue-300"
                         title="Edit product"
                       >
                         <Edit2 className="w-5 h-5" />
                       </Link>
                       <button
                         onClick={() => handleDelete(product.id)}
-                        className="text-red-500 hover:text-red-700 dark:hover:text-red-300" 
+                        className="text-red-500 hover:text-red-700 dark:hover:text-red-300"
                         title="Delete product"
                       >
                         <Trash2 className="w-5 h-5" />
@@ -495,7 +497,7 @@ const ProductListPage: React.FC = () => {
                   <span className="sr-only">Previous</span>
                   <ChevronLeft className="h-5 w-5" aria-hidden="true" />
                 </button>
-                
+
                 {/* Page numbers */}
                 {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                   // Show at most 5 pages centered around current page
@@ -508,17 +510,16 @@ const ProductListPage: React.FC = () => {
                   } else {
                     pageNum = currentPage - 2 + i;
                   }
-                  
+
                   if (pageNum <= totalPages) {
                     return (
                       <button
                         key={pageNum}
                         onClick={() => setCurrentPage(pageNum)}
-                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                          currentPage === pageNum
+                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${currentPage === pageNum
                             ? 'z-10 bg-green-50 dark:bg-green-900 border-green-500 dark:border-green-600 text-green-600 dark:text-green-200'
                             : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
-                        }`}
+                          }`}
                       >
                         {pageNum}
                       </button>
@@ -526,7 +527,7 @@ const ProductListPage: React.FC = () => {
                   }
                   return null;
                 })}
-                
+
                 <button
                   onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                   disabled={currentPage >= totalPages}

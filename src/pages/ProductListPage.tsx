@@ -464,7 +464,7 @@ const ProductListPage: React.FC = () => {
             try {
                 let query = supabase
                     .from('products')
-                    .select('*', { count: 'exact', head: true });
+                    .select(`*, categories!products_category_id_fkey(id, name)`, { count: 'exact', head: true });
 
                 if (filters.category) {
                     query = query.eq('category_id', filters.category);
