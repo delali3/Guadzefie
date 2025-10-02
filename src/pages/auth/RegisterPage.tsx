@@ -3,14 +3,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import {
   ArrowRight,
-  Mail,
-  Lock,
   AlertCircle,
   CheckCircle,
   Eye,
   EyeOff,
   ShoppingBag,
-  User
 } from 'lucide-react';
 import bcrypt from 'bcryptjs'; // You'll need to install this package
 
