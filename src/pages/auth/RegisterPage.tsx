@@ -291,7 +291,7 @@ const RegisterPage: React.FC = () => {
                 </label>
                 <div className="relative rounded-md shadow-sm">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
-                    <User className="h-5 w-5 text-gray-400" aria-hidden="true" />
+                    {/* <User className="h-5 w-5 text-gray-400" aria-hidden="true" /> */}
                   </div>
                   <input
                     id="first-name"
@@ -319,7 +319,7 @@ const RegisterPage: React.FC = () => {
                 </label>
                 <div className="relative rounded-md shadow-sm">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
-                    <User className="h-5 w-5 text-gray-400" aria-hidden="true" />
+                    {/* <User className="h-5 w-5 text-gray-400" aria-hidden="true" /> */}
                   </div>
                   <input
                     id="last-name"
@@ -348,7 +348,7 @@ const RegisterPage: React.FC = () => {
               </label>
               <div className="relative rounded-md shadow-sm">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
-                  <Mail className="h-5 w-5 text-gray-400" aria-hidden="true" />
+                  {/* <Mail className="h-5 w-5 text-gray-400" aria-hidden="true" /> */}
                 </div>
                 <input
                   id="email"
@@ -384,7 +384,7 @@ const RegisterPage: React.FC = () => {
                     } rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200`}
                 >
                   <div className="text-center">
-                    <User className={`h-6 w-6 mx-auto ${!isFarm ? 'text-green-500' : 'text-gray-400'}`} />
+                    {/* <User className={`h-6 w-6 mx-auto ${!isFarm ? 'text-green-500' : 'text-gray-400'}`} /> */}
                     <span className={`block mt-2 text-sm font-medium ${!isFarm ? 'text-green-700 dark:text-green-300' : 'text-gray-700 dark:text-gray-300'
                       }`}>
                       Consumer
@@ -426,7 +426,7 @@ const RegisterPage: React.FC = () => {
               </label>
               <div className="relative rounded-md shadow-sm">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
-                  <Lock className="h-5 w-5 text-gray-400" aria-hidden="true" />
+                  {/* <Lock className="h-5 w-5 text-gray-400" aria-hidden="true" /> */}
                 </div>
                 <input
                   id="password"
@@ -470,7 +470,7 @@ const RegisterPage: React.FC = () => {
               </label>
               <div className="relative rounded-md shadow-sm">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
-                  <Lock className="h-5 w-5 text-gray-400" aria-hidden="true" />
+                  {/* <Lock className="h-5 w-5 text-gray-400" aria-hidden="true" /> */}
                 </div>
                 <input
                   id="confirm-password"
