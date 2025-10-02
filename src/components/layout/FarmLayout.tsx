@@ -372,9 +372,12 @@ const FarmLayout: React.FC<FarmLayoutProps> = ({ darkMode, toggleDarkMode }) => 
               </button>
 
               {/* Notifications */}
-              <div className="relative">
+              <div
+                className="relative"
+                onMouseEnter={() => setNotificationsOpen(true)}
+                onMouseLeave={() => setNotificationsOpen(false)}
+              >
                 <button
-                  onClick={() => setNotificationsOpen(!notificationsOpen)}
                   className="p-1 text-gray-500 dark:text-gray-400 rounded-full hover:text-gray-900 dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
                 >
                   <span className="sr-only">View notifications</span>
@@ -387,7 +390,8 @@ const FarmLayout: React.FC<FarmLayoutProps> = ({ darkMode, toggleDarkMode }) => 
 
                 {/* Dropdown panel, show/hide based on dropdown state */}
                 {notificationsOpen && (
-                  <div className="origin-top-right absolute right-0 mt-2 w-80 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none">
+                  <div className="origin-top-right absolute right-0 top-full pt-2 w-80">
+                    <div className="rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none">
                     <div className="py-1">
                       <div className="block px-4 py-2 text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700">
                         <p className="text-sm font-medium">Notifications</p>
@@ -441,14 +445,18 @@ const FarmLayout: React.FC<FarmLayoutProps> = ({ darkMode, toggleDarkMode }) => 
                         <a href="#">View all notifications</a>
                       </div>
                     </div>
+                    </div>
                   </div>
                 )}
               </div>
 
               {/* Profile dropdown */}
-              <div className="relative">
+              <div
+                className="relative"
+                onMouseEnter={() => setDropdownOpen(true)}
+                onMouseLeave={() => setDropdownOpen(false)}
+              >
                 <button
-                  onClick={() => setDropdownOpen(!dropdownOpen)}
                   className="max-w-xs flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
                 >
                   <span className="sr-only">Open user menu</span>
@@ -459,12 +467,14 @@ const FarmLayout: React.FC<FarmLayoutProps> = ({ darkMode, toggleDarkMode }) => 
 
                 {/* Dropdown menu */}
                 {dropdownOpen && (
-                  <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5">
+                  <div className="origin-top-right absolute right-0 top-full pt-2 w-48">
+                    <div className="rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5">
                     <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="user-menu">
                       <Link
                         to="/farm/profile"
                         className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                         role="menuitem"
+                        onClick={() => setDropdownOpen(false)}
                       >
                         Your Profile
                       </Link>
@@ -472,16 +482,21 @@ const FarmLayout: React.FC<FarmLayoutProps> = ({ darkMode, toggleDarkMode }) => 
                         to="/farm/settings"
                         className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                         role="menuitem"
+                        onClick={() => setDropdownOpen(false)}
                       >
                         Settings
                       </Link>
                       <button
-                        onClick={handleSignOut}
+                        onClick={() => {
+                          setDropdownOpen(false);
+                          handleSignOut();
+                        }}
                         className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                         role="menuitem"
                       >
                         Sign out
                       </button>
+                    </div>
                     </div>
                   </div>
                 )}

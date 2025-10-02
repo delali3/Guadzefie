@@ -192,9 +192,12 @@ const ConsumerLayout: React.FC<ConsumerLayoutProps> = ({ darkMode, toggleDarkMod
               </button>
 
               {/* Notifications */}
-              <div className="relative">
+              <div
+                className="relative"
+                onMouseEnter={() => setNotificationsOpen(true)}
+                onMouseLeave={() => setNotificationsOpen(false)}
+              >
                 <button
-                  onClick={() => setNotificationsOpen(!notificationsOpen)}
                   className="p-1 text-gray-500 rounded-full hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
                 >
                   <span className="sr-only">View notifications</span>
@@ -207,7 +210,8 @@ const ConsumerLayout: React.FC<ConsumerLayoutProps> = ({ darkMode, toggleDarkMod
 
                 {/* Dropdown panel, show/hide based on dropdown state */}
                 {notificationsOpen && (
-                  <div className="origin-top-right absolute right-0 mt-2 w-80 rounded-md shadow-lg theme-card ring-1 ring-black ring-opacity-5 focus:outline-none">
+                  <div className="origin-top-right absolute right-0 top-full pt-2 w-80">
+                    <div className="rounded-md shadow-lg theme-card ring-1 ring-black ring-opacity-5 focus:outline-none">
                     <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
                       <div className="block px-4 py-2 theme-text theme-border">
                         <p className="text-sm font-medium">Notifications</p>
@@ -247,14 +251,18 @@ const ConsumerLayout: React.FC<ConsumerLayoutProps> = ({ darkMode, toggleDarkMod
                         <button role="menuitem" className="w-full text-center">View all notifications</button>
                       </div>
                     </div>
+                    </div>
                   </div>
                 )}
               </div>
 
               {/* Profile dropdown */}
-              <div className="relative">
+              <div
+                className="relative"
+                onMouseEnter={() => setDropdownOpen(true)}
+                onMouseLeave={() => setDropdownOpen(false)}
+              >
                 <button
-                  onClick={() => setDropdownOpen(!dropdownOpen)}
                   className="max-w-xs flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
                 >
                   <span className="sr-only">Open user menu</span>
@@ -265,12 +273,14 @@ const ConsumerLayout: React.FC<ConsumerLayoutProps> = ({ darkMode, toggleDarkMod
 
                 {/* Dropdown menu */}
                 {dropdownOpen && (
-                  <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg theme-card ring-1 ring-black ring-opacity-5">
+                  <div className="origin-top-right absolute right-0 top-full pt-2 w-48">
+                    <div className="rounded-md shadow-lg theme-card ring-1 ring-black ring-opacity-5">
                     <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="user-menu">
                       <Link
                         to="/consumer/profile"
                         className="block px-4 py-2 text-sm theme-text hover:bg-gray-100"
                         role="menuitem"
+                        onClick={() => setDropdownOpen(false)}
                       >
                         Your Profile
                       </Link>
@@ -278,16 +288,21 @@ const ConsumerLayout: React.FC<ConsumerLayoutProps> = ({ darkMode, toggleDarkMod
                         to="/consumer/settings"
                         className="block px-4 py-2 text-sm theme-text hover:bg-gray-100"
                         role="menuitem"
+                        onClick={() => setDropdownOpen(false)}
                       >
                         Settings
                       </Link>
                       <button
-                        onClick={handleSignOut}
+                        onClick={() => {
+                          setDropdownOpen(false);
+                          handleSignOut();
+                        }}
                         className="block w-full text-left px-4 py-2 text-sm theme-text hover:bg-gray-100"
                         role="menuitem"
                       >
                         Sign out
                       </button>
+                    </div>
                     </div>
                   </div>
                 )}

@@ -116,45 +116,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
     await supabase.auth.signOut();
   };
 
-  // Handle click outside to close dropdowns
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      // Close category dropdown when clicking outside
-      if (
-        categoryDropdownRef.current && 
-        !categoryDropdownRef.current.contains(event.target as Node) &&
-        categoryDropdownOpen
-      ) {
-        setCategoryDropdownOpen(false);
-      }
-      
-      // Close user dropdown when clicking outside
-      if (
-        userDropdownRef.current && 
-        !userDropdownRef.current.contains(event.target as Node) &&
-        userDropdownOpen
-      ) {
-        setUserDropdownOpen(false);
-      }
-
-      // Close mobile category dropdown when clicking outside
-      if (
-        mobileCategoryDropdownRef.current && 
-        !mobileCategoryDropdownRef.current.contains(event.target as Node) &&
-        mobileCategoryOpen
-      ) {
-        setMobileCategoryOpen(false);
-      }
-    }
-
-    // Add event listener
-    document.addEventListener('mousedown', handleClickOutside);
-    
-    // Clean up
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [categoryDropdownOpen, userDropdownOpen, mobileCategoryOpen]);
+  // Note: Click-outside handlers removed - now using hover for desktop dropdowns
 
   return (
     <div className="flex flex-col min-h-screen bg-green-50 dark:bg-gray-900 transition-colors duration-200">
@@ -187,28 +149,34 @@ const MainLayout: React.FC<MainLayoutProps> = ({
               <Link to="/" className="text-gray-600 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 px-2 py-2 rounded-md text-sm font-medium">
                 Home
               </Link>
-              <div className="relative" ref={categoryDropdownRef}>
+              <div
+                className="relative"
+                ref={categoryDropdownRef}
+                onMouseEnter={() => setCategoryDropdownOpen(true)}
+                onMouseLeave={() => setCategoryDropdownOpen(false)}
+              >
                 <button
-                  onClick={() => setCategoryDropdownOpen(!categoryDropdownOpen)}
                   className="text-gray-600 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 px-2 py-2 rounded-md text-sm font-medium flex items-center"
                 >
                   Farm Categories
                   <ChevronDown className="ml-1 h-4 w-4" />
                 </button>
                 {categoryDropdownOpen && (
-                  <div className="absolute z-40 mt-2 w-48 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5">
-                    <div className="py-1" role="list" aria-orientation="vertical" aria-labelledby="category-dropdown-label" title="Category dropdown">
-                      {categories.map((category) => (
-                        <Link
-                          key={category.id}
-                          to={`/products?category=${category.id}`}
-                          className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                          onClick={() => setCategoryDropdownOpen(false)}
-                          role="listitem"
-                        >
-                          {category.name}
-                        </Link>
-                      ))}
+                  <div className="absolute z-40 top-full pt-2 w-48">
+                    <div className="rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5">
+                      <div className="py-1" role="list" aria-orientation="vertical" aria-labelledby="category-dropdown-label" title="Category dropdown">
+                        {categories.map((category) => (
+                          <Link
+                            key={category.id}
+                            to={`/products?category=${category.id}`}
+                            className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                            onClick={() => setCategoryDropdownOpen(false)}
+                            role="listitem"
+                          >
+                            {category.name}
+                          </Link>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -267,50 +235,56 @@ const MainLayout: React.FC<MainLayoutProps> = ({
 
               {/* Account - desktop only */}
               {isAuthenticated ? (
-                <div className="relative hidden sm:block" ref={userDropdownRef}>
+                <div
+                  className="relative hidden sm:block"
+                  ref={userDropdownRef}
+                  onMouseEnter={() => setUserDropdownOpen(true)}
+                  onMouseLeave={() => setUserDropdownOpen(false)}
+                >
                   <button
-                    onClick={() => setUserDropdownOpen(!userDropdownOpen)}
                     className="p-1.5 sm:p-2 rounded-full text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400"
                     aria-label="Account"
                   >
                     <User className="h-4 w-4 sm:h-5 sm:w-5" />
                   </button>
                   {userDropdownOpen && (
-                    <div className="absolute right-0 z-40 mt-2 w-48 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5">
-                      <div className="py-1" role="menu" aria-orientation="vertical">
-                        <Link
-                          to="/consumer/profile"
-                          className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                          onClick={() => setUserDropdownOpen(false)}
-                        >
-                          My Account
-                        </Link>
-                        <Link
-                          to="/consumer/orders"
-                          className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                          onClick={() => setUserDropdownOpen(false)}
-                        >
-                          Orders
-                        </Link>
-                        <Link
-                          to="/my-farm"
-                          className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                          onClick={() => setUserDropdownOpen(false)}
-                        >
-                          My Farm
-                        </Link>
-                        <button
-                          onClick={() => {
-                            handleSignOut();
-                            setUserDropdownOpen(false);
-                          }}
-                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                        >
-                          <div className="flex items-center">
-                            <LogOut className="h-4 w-4 mr-2" />
-                            Sign Out
-                          </div>
-                        </button>
+                    <div className="absolute right-0 z-40 top-full pt-2 w-48">
+                      <div className="rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5">
+                        <div className="py-1" role="menu" aria-orientation="vertical">
+                          <Link
+                            to="/consumer/profile"
+                            className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                            onClick={() => setUserDropdownOpen(false)}
+                          >
+                            My Account
+                          </Link>
+                          <Link
+                            to="/consumer/orders"
+                            className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                            onClick={() => setUserDropdownOpen(false)}
+                          >
+                            Orders
+                          </Link>
+                          <Link
+                            to="/my-farm"
+                            className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                            onClick={() => setUserDropdownOpen(false)}
+                          >
+                            My Farm
+                          </Link>
+                          <button
+                            onClick={() => {
+                              setUserDropdownOpen(false);
+                              handleSignOut();
+                            }}
+                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                          >
+                            <div className="flex items-center">
+                              <LogOut className="h-4 w-4 mr-2" />
+                              Sign Out
+                            </div>
+                          </button>
+                        </div>
                       </div>
                     </div>
                   )}
