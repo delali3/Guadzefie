@@ -160,6 +160,72 @@ body {
   border-width: 1px;
 }
 
+/* Table row fixes for dark mode - prevent white background on click/focus/active */
+tr:focus,
+tr:active,
+tr:focus-visible,
+tbody tr:focus,
+tbody tr:active,
+tbody tr:focus-visible {
+  outline: none !important;
+  background-color: inherit !important;
+}
+
+.dark tr:focus,
+.dark tr:active,
+.dark tr:focus-visible,
+.dark tbody tr:focus,
+.dark tbody tr:active,
+.dark tbody tr:focus-visible {
+  background-color: inherit !important;
+  color: inherit !important;
+}
+
+/* Ensure table rows maintain proper colors when clicked in dark mode */
+.dark tbody tr:focus td,
+.dark tbody tr:active td,
+.dark tbody tr:focus-within td,
+.dark tbody tr:focus-visible td {
+  color: var(--text-dark) !important;
+  background-color: transparent !important;
+}
+
+/* Ensure table cells maintain text color in dark mode */
+.dark tbody tr td {
+  color: var(--text-dark);
+}
+
+.dark tbody tr td.text-gray-500 {
+  color: var(--text-secondary-dark) !important;
+}
+
+/* Enhanced hover states for table rows */
+tbody tr {
+  transition: background-color 150ms ease-in-out;
+  cursor: default;
+}
+
+/* Consistent hover state for all table rows in dark mode */
+.dark tbody tr:hover {
+  background-color: rgba(55, 65, 81, 0.5) !important; /* gray-700 with opacity */
+}
+
+/* Prevent focus/active from overriding hover in dark mode */
+.dark tbody tr:hover:focus,
+.dark tbody tr:hover:active,
+.dark tbody tr:hover:focus-visible {
+  background-color: rgba(55, 65, 81, 0.5) !important;
+}
+
+/* Override any user-agent stylesheet defaults for table rows */
+.dark table tr:focus {
+  background-color: transparent !important;
+}
+
+.dark table tr:active {
+  background-color: transparent !important;
+}
+
 /* Debug panel */
 .debug-theme {
   position: fixed;

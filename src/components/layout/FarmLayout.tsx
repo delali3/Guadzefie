@@ -103,8 +103,8 @@ const FarmLayout: React.FC<FarmLayoutProps> = ({ darkMode, toggleDarkMode }) => 
                 className={({ isActive }) =>
                   `flex items-center px-4 py-2 text-sm font-medium rounded-md ${
                     isActive
-                      ? 'bg-green-800 text-white'
-                      : 'text-gray-300 hover:bg-green-700 hover:text-white'
+                      ? 'bg-green-600 text-white dark:bg-green-700'
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/30 hover:text-green-600 dark:hover:text-white'
                   }`
                 }
               >
@@ -117,8 +117,8 @@ const FarmLayout: React.FC<FarmLayoutProps> = ({ darkMode, toggleDarkMode }) => 
                 className={({ isActive }) =>
                   `flex items-center px-4 py-2 text-sm font-medium rounded-md ${
                     isActive
-                      ? 'bg-green-800 text-white'
-                      : 'text-gray-300 hover:bg-green-700 hover:text-white'
+                      ? 'bg-green-600 text-white dark:bg-green-700'
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/30 hover:text-green-600 dark:hover:text-white'
                   }`
                 }
               >
@@ -131,8 +131,8 @@ const FarmLayout: React.FC<FarmLayoutProps> = ({ darkMode, toggleDarkMode }) => 
                 className={({ isActive }) =>
                   `flex items-center px-4 py-2 text-sm font-medium rounded-md ${
                     isActive
-                      ? 'bg-green-800 text-white'
-                      : 'text-gray-300 hover:bg-green-700 hover:text-white'
+                      ? 'bg-green-600 text-white dark:bg-green-700'
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/30 hover:text-green-600 dark:hover:text-white'
                   }`
                 }
               >
@@ -145,8 +145,8 @@ const FarmLayout: React.FC<FarmLayoutProps> = ({ darkMode, toggleDarkMode }) => 
                 className={({ isActive }) =>
                   `flex items-center px-4 py-2 text-sm font-medium rounded-md ${
                     isActive
-                      ? 'bg-green-800 text-white'
-                      : 'text-gray-300 hover:bg-green-700 hover:text-white'
+                      ? 'bg-green-600 text-white dark:bg-green-700'
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/30 hover:text-green-600 dark:hover:text-white'
                   }`
                 }
               >
@@ -159,8 +159,8 @@ const FarmLayout: React.FC<FarmLayoutProps> = ({ darkMode, toggleDarkMode }) => 
                 className={({ isActive }) =>
                   `flex items-center px-4 py-2 text-sm font-medium rounded-md ${
                     isActive
-                      ? 'bg-green-800 text-white'
-                      : 'text-gray-300 hover:bg-green-700 hover:text-white'
+                      ? 'bg-green-600 text-white dark:bg-green-700'
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/30 hover:text-green-600 dark:hover:text-white'
                   }`
                 }
               >
@@ -173,8 +173,8 @@ const FarmLayout: React.FC<FarmLayoutProps> = ({ darkMode, toggleDarkMode }) => 
                 className={({ isActive }) =>
                   `flex items-center px-4 py-2 text-sm font-medium rounded-md ${
                     isActive
-                      ? 'bg-green-800 text-white'
-                      : 'text-gray-300 hover:bg-green-700 hover:text-white'
+                      ? 'bg-green-600 text-white dark:bg-green-700'
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/30 hover:text-green-600 dark:hover:text-white'
                   }`
                 }
               >
@@ -187,8 +187,8 @@ const FarmLayout: React.FC<FarmLayoutProps> = ({ darkMode, toggleDarkMode }) => 
                 className={({ isActive }) =>
                   `flex items-center px-4 py-2 text-sm font-medium rounded-md ${
                     isActive
-                      ? 'bg-green-800 text-white'
-                      : 'text-gray-300 hover:bg-green-700 hover:text-white'
+                      ? 'bg-green-600 text-white dark:bg-green-700'
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/30 hover:text-green-600 dark:hover:text-white'
                   }`
                 }
               >
@@ -228,8 +228,8 @@ const FarmLayout: React.FC<FarmLayoutProps> = ({ darkMode, toggleDarkMode }) => 
                   className={({ isActive }) =>
                     `flex items-center px-4 py-2 text-sm font-medium rounded-md ${
                       isActive
-                        ? 'bg-green-800 text-white'
-                        : 'text-gray-300 hover:bg-green-700 hover:text-white'
+                        ? 'bg-green-600 text-white dark:bg-green-700'
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/30 hover:text-green-600 dark:hover:text-white'
                     }`
                   }
                 >
@@ -242,8 +242,8 @@ const FarmLayout: React.FC<FarmLayoutProps> = ({ darkMode, toggleDarkMode }) => 
                   className={({ isActive }) =>
                     `flex items-center px-4 py-2 text-sm font-medium rounded-md ${
                       isActive
-                        ? 'bg-green-800 text-white'
-                        : 'text-gray-300 hover:bg-green-700 hover:text-white'
+                        ? 'bg-green-600 text-white dark:bg-green-700'
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/30 hover:text-green-600 dark:hover:text-white'
                     }`
                   }
                 >
@@ -256,8 +256,8 @@ const FarmLayout: React.FC<FarmLayoutProps> = ({ darkMode, toggleDarkMode }) => 
                   className={({ isActive }) =>
                     `flex items-center px-4 py-2 text-sm font-medium rounded-md ${
                       isActive
-                        ? 'bg-green-800 text-white'
-                        : 'text-gray-300 hover:bg-green-700 hover:text-white'
+                        ? 'bg-green-600 text-white dark:bg-green-700'
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/30 hover:text-green-600 dark:hover:text-white'
                     }`
                   }
                 >
@@ -270,8 +270,8 @@ const FarmLayout: React.FC<FarmLayoutProps> = ({ darkMode, toggleDarkMode }) => 
                   className={({ isActive }) =>
                     `flex items-center px-4 py-2 text-sm font-medium rounded-md ${
                       isActive
-                        ? 'bg-green-800 text-white'
-                        : 'text-gray-300 hover:bg-green-700 hover:text-white'
+                        ? 'bg-green-600 text-white dark:bg-green-700'
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/30 hover:text-green-600 dark:hover:text-white'
                     }`
                   }
                 >
@@ -284,8 +284,8 @@ const FarmLayout: React.FC<FarmLayoutProps> = ({ darkMode, toggleDarkMode }) => 
                   className={({ isActive }) =>
                     `flex items-center px-4 py-2 text-sm font-medium rounded-md ${
                       isActive
-                        ? 'bg-green-800 text-white'
-                        : 'text-gray-300 hover:bg-green-700 hover:text-white'
+                        ? 'bg-green-600 text-white dark:bg-green-700'
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/30 hover:text-green-600 dark:hover:text-white'
                     }`
                   }
                 >
@@ -298,8 +298,8 @@ const FarmLayout: React.FC<FarmLayoutProps> = ({ darkMode, toggleDarkMode }) => 
                   className={({ isActive }) =>
                     `flex items-center px-4 py-2 text-sm font-medium rounded-md ${
                       isActive
-                        ? 'bg-green-800 text-white'
-                        : 'text-gray-300 hover:bg-green-700 hover:text-white'
+                        ? 'bg-green-600 text-white dark:bg-green-700'
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/30 hover:text-green-600 dark:hover:text-white'
                     }`
                   }
                 >
@@ -312,8 +312,8 @@ const FarmLayout: React.FC<FarmLayoutProps> = ({ darkMode, toggleDarkMode }) => 
                   className={({ isActive }) =>
                     `flex items-center px-4 py-2 text-sm font-medium rounded-md ${
                       isActive
-                        ? 'bg-green-800 text-white'
-                        : 'text-gray-300 hover:bg-green-700 hover:text-white'
+                        ? 'bg-green-600 text-white dark:bg-green-700'
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/30 hover:text-green-600 dark:hover:text-white'
                     }`
                   }
                 >
