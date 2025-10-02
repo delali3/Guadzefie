@@ -272,12 +272,12 @@ const DiscountPage: React.FC = () => {
       {/* Search */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-4">
         <div className="relative flex-1">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
             <Search className="h-5 w-5 text-gray-400" />
           </div>
           <input
             type="text"
-            className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md leading-5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
+            className="block w-full pl-12 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md leading-5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
             placeholder="Search discount codes..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -298,7 +298,7 @@ const DiscountPage: React.FC = () => {
                   Code
                 </label>
                 <div className="mt-1 relative rounded-md shadow-sm">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
                     <Tag className="h-5 w-5 text-gray-400" />
                   </div>
                   <input
@@ -308,7 +308,7 @@ const DiscountPage: React.FC = () => {
                     required
                     value={formData.code}
                     onChange={handleInputChange}
-                    className="pl-10 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                    className="pl-12 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                     placeholder="SUMMER20"
                   />
                 </div>
@@ -335,7 +335,7 @@ const DiscountPage: React.FC = () => {
                   {formData.type === 'percentage' ? 'Percentage Value' : 'Fixed Amount'}
                 </label>
                 <div className="mt-1 relative rounded-md shadow-sm">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
                     {formData.type === 'percentage' ? (
                       <Percent className="h-5 w-5 text-gray-400" />
                     ) : (
@@ -350,7 +350,7 @@ const DiscountPage: React.FC = () => {
                     min="0"
                     value={formData.value}
                     onChange={handleInputChange}
-                    className="pl-10 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                    className="pl-12 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                   />
                 </div>
               </div>
@@ -360,7 +360,7 @@ const DiscountPage: React.FC = () => {
                   Minimum Order Value
                 </label>
                 <div className="mt-1 relative rounded-md shadow-sm">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
                     <span className="text-gray-500">GHS</span>
                   </div>
                   <input
@@ -370,7 +370,7 @@ const DiscountPage: React.FC = () => {
                     min="0"
                     value={formData.min_order_value}
                     onChange={handleInputChange}
-                    className="pl-10 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                    className="pl-12 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                   />
                 </div>
               </div>
@@ -381,7 +381,7 @@ const DiscountPage: React.FC = () => {
                     Maximum Discount Amount
                   </label>
                   <div className="mt-1 relative rounded-md shadow-sm">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
                       <span className="text-gray-500">GHS</span>
                     </div>
                     <input
@@ -391,7 +391,7 @@ const DiscountPage: React.FC = () => {
                       min="0"
                       value={formData.max_discount_amount}
                       onChange={handleInputChange}
-                      className="pl-10 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                      className="pl-12 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                     />
                   </div>
                 </div>
@@ -402,7 +402,7 @@ const DiscountPage: React.FC = () => {
                   Start Date
                 </label>
                 <div className="mt-1 relative rounded-md shadow-sm">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
                     <Calendar className="h-5 w-5 text-gray-400" />
                   </div>
                   <input
@@ -412,7 +412,7 @@ const DiscountPage: React.FC = () => {
                     required
                     value={formData.starts_at}
                     onChange={handleInputChange}
-                    className="pl-10 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                    className="pl-12 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                   />
                 </div>
               </div>
@@ -422,7 +422,7 @@ const DiscountPage: React.FC = () => {
                   Expiry Date
                 </label>
                 <div className="mt-1 relative rounded-md shadow-sm">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
                     <Calendar className="h-5 w-5 text-gray-400" />
                   </div>
                   <input
@@ -432,7 +432,7 @@ const DiscountPage: React.FC = () => {
                     required
                     value={formData.expires_at}
                     onChange={handleInputChange}
-                    className="pl-10 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                    className="pl-12 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                   />
                 </div>
               </div>

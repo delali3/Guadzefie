@@ -427,16 +427,16 @@ const MainLayout: React.FC<MainLayoutProps> = ({
             </div>
             <form onSubmit={handleSearchSubmit}>
               <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
+                  <Search className="h-5 w-5 text-gray-400" />
+                </div>
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search for farm produce..."
-                  className="w-full border border-gray-300 dark:border-gray-600 rounded-md py-2 px-4 pl-10 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-md py-2 px-4 pl-12 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 />
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center">
-                  <Search className="h-5 w-5 text-gray-400" />
-                </div>
               </div>
               <button
                 type="submit"

@@ -124,7 +124,7 @@ const ForgotPasswordPage: React.FC = () => {
                 Email address
               </label>
               <div className="relative rounded-md shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
                   <Mail className="h-5 w-5 text-gray-400" aria-hidden="true" />
                 </div>
                 <input
@@ -135,9 +135,9 @@ const ForgotPasswordPage: React.FC = () => {
                   value={email}
                   onChange={handleEmailChange}
                   required
-                  className={`appearance-none block w-full px-3 py-3 pl-10 rounded-lg border ${
-                    emailError 
-                      ? 'border-red-300 dark:border-red-600 focus:ring-red-500 focus:border-red-500' 
+                  className={`appearance-none block w-full px-3 py-3 pl-12 rounded-lg border ${
+                    emailError
+                      ? 'border-red-300 dark:border-red-600 focus:ring-red-500 focus:border-red-500'
                       : 'border-gray-300 dark:border-gray-600 focus:ring-green-500 focus:border-green-500'
                   } shadow-sm placeholder-gray-400 text-gray-900 dark:text-white dark:bg-gray-800 focus:outline-none focus:z-10 sm:text-sm`}
                   placeholder="you@example.com"

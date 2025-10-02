@@ -360,7 +360,7 @@ const SettingsPage: React.FC = () => {
                   Email Address
                 </label>
                 <div className="mt-1 relative rounded-md shadow-sm">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
                     <Mail className="h-5 w-5 text-gray-400 dark:text-gray-500" />
                   </div>
                   <input
@@ -369,7 +369,7 @@ const SettingsPage: React.FC = () => {
                     id="store_email"
                     value={storeSettings.store_email}
                     onChange={handleStoreSettingsChange}
-                    className="pl-10 focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                    className="pl-12 focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                   />
                 </div>
               </div>
@@ -379,7 +379,7 @@ const SettingsPage: React.FC = () => {
                   Phone Number
                 </label>
                 <div className="mt-1 relative rounded-md shadow-sm">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
                     <Phone className="h-5 w-5 text-gray-400 dark:text-gray-500" />
                   </div>
                   <input
@@ -388,7 +388,7 @@ const SettingsPage: React.FC = () => {
                     id="store_phone"
                     value={storeSettings.store_phone}
                     onChange={handleStoreSettingsChange}
-                    className="pl-10 focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                    className="pl-12 focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                   />
                 </div>
               </div>
@@ -399,7 +399,7 @@ const SettingsPage: React.FC = () => {
                 Store Address
               </label>
               <div className="mt-1 relative rounded-md shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
                   <MapPin className="h-5 w-5 text-gray-400 dark:text-gray-500" />
                 </div>
                 <input
@@ -408,7 +408,7 @@ const SettingsPage: React.FC = () => {
                   id="store_address"
                   value={storeSettings.store_address}
                   onChange={handleStoreSettingsChange}
-                  className="pl-10 focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                  className="pl-12 focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                   placeholder="Street address"
                 />
               </div>
@@ -463,7 +463,7 @@ const SettingsPage: React.FC = () => {
                 Country
               </label>
               <div className="mt-1 relative rounded-md shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
                   <Globe className="h-5 w-5 text-gray-400 dark:text-gray-500" />
                 </div>
                 <input
@@ -472,7 +472,7 @@ const SettingsPage: React.FC = () => {
                   id="store_country"
                   value={storeSettings.store_country}
                   onChange={handleStoreSettingsChange}
-                  className="pl-10 focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                  className="pl-12 focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                   placeholder="Ghana"
                 />
               </div>
@@ -483,7 +483,7 @@ const SettingsPage: React.FC = () => {
                 Store Logo URL
               </label>
               <div className="mt-1 relative rounded-md shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
                   <Image className="h-5 w-5 text-gray-400 dark:text-gray-500" />
                 </div>
                 <input
@@ -492,7 +492,7 @@ const SettingsPage: React.FC = () => {
                   id="store_logo_url"
                   value={storeSettings.store_logo_url}
                   onChange={handleStoreSettingsChange}
-                  className="pl-10 focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                  className="pl-12 focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                   placeholder="https://example.com/logo.png"
                 />
               </div>
@@ -505,7 +505,7 @@ const SettingsPage: React.FC = () => {
                   Instagram
                 </label>
                 <div className="mt-1 relative rounded-md shadow-sm">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
                     <Instagram className="h-5 w-5 text-gray-400 dark:text-gray-500" />
                   </div>
                   <input
@@ -514,7 +514,7 @@ const SettingsPage: React.FC = () => {
                     id="social_instagram"
                     value={storeSettings.social_instagram}
                     onChange={handleStoreSettingsChange}
-                    className="pl-10 focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                    className="pl-12 focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                     placeholder="@yourusername"
                   />
                 </div>
@@ -525,7 +525,7 @@ const SettingsPage: React.FC = () => {
                   Facebook
                 </label>
                 <div className="mt-1 relative rounded-md shadow-sm">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
                     <Facebook className="h-5 w-5 text-gray-400 dark:text-gray-500" />
                   </div>
                   <input
@@ -534,7 +534,7 @@ const SettingsPage: React.FC = () => {
                     id="social_facebook"
                     value={storeSettings.social_facebook}
                     onChange={handleStoreSettingsChange}
-                    className="pl-10 focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                    className="pl-12 focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                     placeholder="facebook.com/yourpage"
                   />
                 </div>
@@ -545,7 +545,7 @@ const SettingsPage: React.FC = () => {
                   Twitter
                 </label>
                 <div className="mt-1 relative rounded-md shadow-sm">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
                     <Twitter className="h-5 w-5 text-gray-400 dark:text-gray-500" />
                   </div>
                   <input
@@ -554,7 +554,7 @@ const SettingsPage: React.FC = () => {
                     id="social_twitter"
                     value={storeSettings.social_twitter}
                     onChange={handleStoreSettingsChange}
-                    className="pl-10 focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                    className="pl-12 focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                     placeholder="@yourusername"
                   />
                 </div>

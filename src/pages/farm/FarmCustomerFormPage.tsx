@@ -134,7 +134,7 @@ const FarmCustomerFormPage: React.FC = () => {
                   Email <span className="text-red-500">*</span>
                 </label>
                 <div className="mt-1 relative rounded-md shadow-sm">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
                     <Mail className="h-5 w-5 text-gray-400" />
                   </div>
                   <input
@@ -142,7 +142,7 @@ const FarmCustomerFormPage: React.FC = () => {
                     name="email"
                     id="email"
                     required
-                    className="pl-10 block w-full border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm dark:bg-gray-700 dark:text-white"
+                    className="pl-12 block w-full border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm dark:bg-gray-700 dark:text-white"
                     placeholder="customer@example.com"
                     value={formData.email}
                     onChange={handleChange}
@@ -156,14 +156,14 @@ const FarmCustomerFormPage: React.FC = () => {
                   Phone Number
                 </label>
                 <div className="mt-1 relative rounded-md shadow-sm">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
                     <Phone className="h-5 w-5 text-gray-400" />
                   </div>
                   <input
                     type="tel"
                     name="phone"
                     id="phone"
-                    className="pl-10 block w-full border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm dark:bg-gray-700 dark:text-white"
+                    className="pl-12 block w-full border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm dark:bg-gray-700 dark:text-white"
                     placeholder="+1 (123) 456-7890"
                     value={formData.phone}
                     onChange={handleChange}
@@ -177,14 +177,14 @@ const FarmCustomerFormPage: React.FC = () => {
                   First Name
                 </label>
                 <div className="mt-1 relative rounded-md shadow-sm">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
                     <User className="h-5 w-5 text-gray-400" />
                   </div>
                   <input
                     type="text"
                     name="first_name"
                     id="first_name"
-                    className="pl-10 block w-full border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm dark:bg-gray-700 dark:text-white"
+                    className="pl-12 block w-full border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm dark:bg-gray-700 dark:text-white"
                     placeholder="John"
                     value={formData.first_name}
                     onChange={handleChange}
@@ -198,14 +198,14 @@ const FarmCustomerFormPage: React.FC = () => {
                   Last Name
                 </label>
                 <div className="mt-1 relative rounded-md shadow-sm">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
                     <User className="h-5 w-5 text-gray-400" />
                   </div>
                   <input
                     type="text"
                     name="last_name"
                     id="last_name"
-                    className="pl-10 block w-full border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm dark:bg-gray-700 dark:text-white"
+                    className="pl-12 block w-full border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm dark:bg-gray-700 dark:text-white"
                     placeholder="Doe"
                     value={formData.last_name}
                     onChange={handleChange}

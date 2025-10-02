@@ -159,7 +159,7 @@ const CustomersPage: React.FC = () => {
       {/* Search */}
       <div className="mb-6">
         <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
             <Search className="h-5 w-5 text-gray-400 dark:text-gray-500" />
           </div>
           <input
@@ -167,7 +167,7 @@ const CustomersPage: React.FC = () => {
             placeholder="Search customers by name, email or phone..."
             value={search}
             onChange={handleSearchChange}
-            className="pl-10 py-2 pr-3 w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+            className="pl-12 py-2 pr-3 w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
           />
         </div>
       </div>

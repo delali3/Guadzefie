@@ -373,7 +373,7 @@ const AdminProductsPage: React.FC = () => {
                                 Search products
                             </label>
                             <div className="relative rounded-md shadow-sm">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
                                     <Search className="h-4 w-4 text-gray-400" />
                                 </div>
                                 <input
@@ -382,7 +382,7 @@ const AdminProductsPage: React.FC = () => {
                                     id="search"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="focus:ring-green-500 focus:border-green-500 block w-full pl-10 sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                    className="focus:ring-green-500 focus:border-green-500 block w-full pl-12 sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                                     placeholder="Search products..."
                                 />
                             </div>

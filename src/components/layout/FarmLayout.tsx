@@ -350,12 +350,12 @@ const FarmLayout: React.FC<FarmLayoutProps> = ({ darkMode, toggleDarkMode }) => 
               <form className="w-full flex md:ml-0">
                 <label htmlFor="search-field" className="sr-only">Search</label>
                 <div className="relative w-full text-gray-400 focus-within:text-gray-600 dark:focus-within:text-gray-400">
-                  <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
+                  <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none z-10">
                     <Search className="h-5 w-5" />
                   </div>
                   <input
                     id="search-field"
-                    className="block w-full h-full pl-8 pr-3 py-2 border-transparent bg-transparent text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-0 focus:border-transparent sm:text-sm"
+                    className="block w-full h-full pl-12 pr-3 py-2 border-transparent bg-transparent text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-0 focus:border-transparent sm:text-sm"
                     placeholder="Search products, orders..."
                     type="search"
                   />

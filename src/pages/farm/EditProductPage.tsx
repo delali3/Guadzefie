@@ -347,7 +347,7 @@ const EditProductPage: React.FC = () => {
                 Price (GHS)*
               </label>
               <div className="relative">
-                <span className="absolute left-3 top-2 text-gray-500">₵</span>
+                <span className="absolute left-3 top-2 text-gray-500 pointer-events-none z-10">₵</span>
                 <input
                   type="number"
                   id="price"
@@ -356,7 +356,7 @@ const EditProductPage: React.FC = () => {
                   onChange={handleInputChange}
                   min="0.01"
                   step="0.01"
-                  className="w-full p-2 pl-8 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:text-white"
+                  className="w-full p-2 pl-12 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:text-white"
                   required
                 />
               </div>

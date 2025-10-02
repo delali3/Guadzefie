@@ -290,7 +290,7 @@ const RegisterPage: React.FC = () => {
                   First name
                 </label>
                 <div className="relative rounded-md shadow-sm">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
                     <User className="h-5 w-5 text-gray-400" aria-hidden="true" />
                   </div>
                   <input
@@ -301,7 +301,7 @@ const RegisterPage: React.FC = () => {
                     value={firstName}
                     onChange={handleFirstNameChange}
                     required
-                    className={`appearance-none block w-full px-3 py-3 pl-10 rounded-lg border ${firstNameError
+                    className={`appearance-none relative block w-full px-3 py-3 pl-11 rounded-lg border ${firstNameError
                         ? 'border-red-300 dark:border-red-600 focus:ring-red-500 focus:border-red-500'
                         : 'border-gray-300 dark:border-gray-600 focus:ring-green-500 focus:border-green-500'
                       } shadow-sm placeholder-gray-400 text-gray-900 dark:text-white dark:bg-gray-800 focus:outline-none focus:z-10 sm:text-sm`}
@@ -318,7 +318,7 @@ const RegisterPage: React.FC = () => {
                   Last name
                 </label>
                 <div className="relative rounded-md shadow-sm">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
                     <User className="h-5 w-5 text-gray-400" aria-hidden="true" />
                   </div>
                   <input
@@ -329,7 +329,7 @@ const RegisterPage: React.FC = () => {
                     value={lastName}
                     onChange={handleLastNameChange}
                     required
-                    className={`appearance-none block w-full px-3 py-3 pl-10 rounded-lg border ${lastNameError
+                    className={`appearance-none relative block w-full px-3 py-3 pl-11 rounded-lg border ${lastNameError
                         ? 'border-red-300 dark:border-red-600 focus:ring-red-500 focus:border-red-500'
                         : 'border-gray-300 dark:border-gray-600 focus:ring-green-500 focus:border-green-500'
                       } shadow-sm placeholder-gray-400 text-gray-900 dark:text-white dark:bg-gray-800 focus:outline-none focus:z-10 sm:text-sm`}
@@ -347,7 +347,7 @@ const RegisterPage: React.FC = () => {
                 Email address
               </label>
               <div className="relative rounded-md shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
                   <Mail className="h-5 w-5 text-gray-400" aria-hidden="true" />
                 </div>
                 <input
@@ -358,7 +358,7 @@ const RegisterPage: React.FC = () => {
                   value={email}
                   onChange={handleEmailChange}
                   required
-                  className={`appearance-none block w-full px-3 py-3 pl-10 rounded-lg border ${emailError
+                  className={`appearance-none relative block w-full px-3 py-3 pl-11 rounded-lg border ${emailError
                       ? 'border-red-300 dark:border-red-600 focus:ring-red-500 focus:border-red-500'
                       : 'border-gray-300 dark:border-gray-600 focus:ring-green-500 focus:border-green-500'
                     } shadow-sm placeholder-gray-400 text-gray-900 dark:text-white dark:bg-gray-800 focus:outline-none focus:z-10 sm:text-sm`}
@@ -425,7 +425,7 @@ const RegisterPage: React.FC = () => {
                 Password
               </label>
               <div className="relative rounded-md shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
                   <Lock className="h-5 w-5 text-gray-400" aria-hidden="true" />
                 </div>
                 <input
@@ -436,13 +436,13 @@ const RegisterPage: React.FC = () => {
                   value={password}
                   onChange={handlePasswordChange}
                   required
-                  className={`appearance-none block w-full px-3 py-3 pl-10 pr-10 rounded-lg border ${passwordError
+                  className={`appearance-none relative block w-full px-3 py-3 pl-11 pr-12 rounded-lg border ${passwordError
                       ? 'border-red-300 dark:border-red-600 focus:ring-red-500 focus:border-red-500'
                       : 'border-gray-300 dark:border-gray-600 focus:ring-green-500 focus:border-green-500'
                     } shadow-sm placeholder-gray-400 text-gray-900 dark:text-white dark:bg-gray-800 focus:outline-none focus:z-10 sm:text-sm`}
                   placeholder="••••••••"
                 />
-                <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center z-10">
                   <button
                     type="button"
                     onClick={toggleShowPassword}
@@ -469,7 +469,7 @@ const RegisterPage: React.FC = () => {
                 Confirm password
               </label>
               <div className="relative rounded-md shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
                   <Lock className="h-5 w-5 text-gray-400" aria-hidden="true" />
                 </div>
                 <input
@@ -480,13 +480,13 @@ const RegisterPage: React.FC = () => {
                   value={confirmPassword}
                   onChange={handleConfirmPasswordChange}
                   required
-                  className={`appearance-none block w-full px-3 py-3 pl-10 pr-10 rounded-lg border ${confirmPasswordError
+                  className={`appearance-none relative block w-full px-3 py-3 pl-11 pr-12 rounded-lg border ${confirmPasswordError
                       ? 'border-red-300 dark:border-red-600 focus:ring-red-500 focus:border-red-500'
                       : 'border-gray-300 dark:border-gray-600 focus:ring-green-500 focus:border-green-500'
                     } shadow-sm placeholder-gray-400 text-gray-900 dark:text-white dark:bg-gray-800 focus:outline-none focus:z-10 sm:text-sm`}
                   placeholder="••••••••"
                 />
-                <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center z-10">
                   <button
                     type="button"
                     onClick={toggleShowConfirmPassword}

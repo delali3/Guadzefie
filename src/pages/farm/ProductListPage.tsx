@@ -292,7 +292,7 @@ const ProductListPage: React.FC = () => {
       {/* Filters */}
       <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
             <Search className="h-5 w-5 text-gray-400" />
           </div>
           <input
@@ -300,17 +300,17 @@ const ProductListPage: React.FC = () => {
             placeholder="Search products..."
             value={search}
             onChange={handleSearchChange}
-            className="pl-10 py-2 pr-3 w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 dark:bg-gray-800 dark:text-white"
+            className="pl-12 py-2 pr-3 w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 dark:bg-gray-800 dark:text-white"
           />
         </div>
         <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
             <Filter className="h-5 w-5 text-gray-400" />
           </div>
           <select
             value={categoryFilter?.toString() || ''}
             onChange={handleCategoryFilterChange}
-            className="pl-10 py-2 pr-3 w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 dark:bg-gray-800 dark:text-white"
+            className="pl-12 py-2 pr-3 w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 dark:bg-gray-800 dark:text-white"
             aria-label="Filter by category"
           >
             <option value="">All Categories</option>

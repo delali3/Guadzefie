@@ -305,8 +305,8 @@ const LoginPage: React.FC = () => {
                 Email address
               </label>
               <div className="relative rounded-md shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-400" aria-hidden="true" />
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
+                  {/* <Mail className="h-5 w-5 text-gray-400" aria-hidden="true" /> */}
                 </div>
                 <input
                   id="email"
@@ -316,7 +316,7 @@ const LoginPage: React.FC = () => {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="appearance-none block w-full px-3 py-3 pl-10 rounded-lg border border-gray-300 dark:border-gray-600 shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 text-gray-900 dark:text-white dark:bg-gray-800 sm:text-sm"
+                  className="appearance-none relative block w-full px-3 py-3 pl-11 rounded-lg border border-gray-300 dark:border-gray-600 shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 text-gray-900 dark:text-white dark:bg-gray-800 sm:text-sm"
                   placeholder="you@example.com"
                 />
               </div>
@@ -334,8 +334,8 @@ const LoginPage: React.FC = () => {
                 </div>
               </div>
               <div className="relative rounded-md shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-gray-400" aria-hidden="true" />
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
+                  {/* <Lock className="h-5 w-5 text-gray-400" aria-hidden="true" /> */}
                 </div>
                 <input
                   id="password"
@@ -345,10 +345,10 @@ const LoginPage: React.FC = () => {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="appearance-none block w-full px-3 py-3 pl-10 pr-10 rounded-lg border border-gray-300 dark:border-gray-600 shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 text-gray-900 dark:text-white dark:bg-gray-800 sm:text-sm"
+                  className="appearance-none relative block w-full px-3 py-3 pl-11 pr-12 rounded-lg border border-gray-300 dark:border-gray-600 shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 text-gray-900 dark:text-white dark:bg-gray-800 sm:text-sm"
                   placeholder="••••••••"
                 />
-                <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center z-10">
                   <button
                     type="button"
                     onClick={toggleShowPassword}
