@@ -83,19 +83,29 @@ const FarmDashboardPage: React.FC = () => {
     const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
     const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
     const [lowStockProducts, setLowStockProducts] = useState<Product[]>([]);
-    const { user } = useAuth();
+    const { user, loading: authLoading } = useAuth();
 
     useEffect(() => {
         const fetchDashboardData = async () => {
+            // Wait for auth to finish loading
+            if (authLoading) {
+                console.log("FarmDashboard: Waiting for auth to load...");
+                return;
+            }
+
             setIsLoading(true);
             setError(null);
 
             try {
                 // Check if user is authenticated
                 if (!user || !user.id) {
-                    throw new Error("No authenticated user found");
+                    console.error("FarmDashboard: No authenticated user found");
+                    setError("Authentication required. Please log in again.");
+                    setIsLoading(false);
+                    return;
                 }
-                
+
+                console.log("FarmDashboard: Fetching data for user:", user.id);
                 const userId = user.id;
                 
                 // Get total products for this farm
@@ -388,7 +398,7 @@ const FarmDashboardPage: React.FC = () => {
         };
 
         fetchDashboardData();
-    }, [timeframe, user]);
+    }, [timeframe, user, authLoading]);
 
     if (isLoading) {
         return (

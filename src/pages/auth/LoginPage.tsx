@@ -143,14 +143,26 @@ const LoginPage: React.FC = () => {
           'Failed to create session. Please try again.');
       }
 
+      // Trigger a storage event manually to ensure AuthContext picks up the changes immediately
+      window.dispatchEvent(new StorageEvent('storage', {
+        key: 'user',
+        newValue: JSON.stringify(sessionData),
+        oldValue: null,
+        storageArea: localStorage
+      }));
+
+      // Wait a moment for AuthContext to pick up the changes
+      console.log("Waiting for AuthContext to process the new user...");
+      await new Promise(resolve => setTimeout(resolve, 800)); // Wait 800ms for auth to initialize
+
       // Redirect based on user type
       console.log("Redirecting user based on type:", user.is_farm);
       if (user.is_farm) {
-        navigate('/farm/dashboard');
+        navigate('/farm/dashboard', { replace: true });
       } else {
-        navigate('/consumer/dashboard');
+        navigate('/consumer/dashboard', { replace: true });
       }
-      
+
       console.log("=== LOGIN COMPLETED SUCCESSFULLY ===");
 
     } catch (err) {
